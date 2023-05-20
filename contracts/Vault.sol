@@ -17,16 +17,16 @@ contract Vault is IVault{
         permittedWithdrawers[msg.sender] = true;
     }
 
-    function deposit(uint _amount) external override {
+    function deposit(address from, uint _amount) external override {
         require(permittedDepositors[msg.sender] == true, "Not permitted to deposit");
-        TransferInToken(tokenAddress, msg.sender, _amount);
+        TransferInToken(tokenAddress, from, _amount);
         tokenBalance += _amount;
     }
 
-    function withdraw(address _receiver, uint _amount) external override{
+    function withdraw(address to, uint _amount) external override{
         require(permittedWithdrawers[msg.sender] == true, "Not permitted to withdraw");
         require(tokenBalance >= _amount, "Not enough balance");
-        TransferToken(tokenAddress, _receiver, _amount);
+        TransferToken(tokenAddress, to, _amount);
         tokenBalance -= _amount;
     }
 }
