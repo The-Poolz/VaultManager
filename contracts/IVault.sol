@@ -5,7 +5,7 @@ interface IVault {
     function tokenBalance() external view returns (uint);
     function permittedDepositors(address) external view returns (bool);
     function permittedWithdrawers(address) external view returns (bool);
-    function deposit(uint _amount) external;
-    function withdraw(uint _amount) external;
+    function deposit(address from, uint _amount) external;
+    function withdraw(address to, uint _amount) external;
     function withdrawAll() external;
 }
