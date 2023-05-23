@@ -8,23 +8,24 @@ contract Vault is IVault, ERC20Helper{
     address public override tokenAddress;
     uint public override tokenBalance;
 
-    mapping(address => bool) public override permittedDepositors;
-    mapping(address => bool) public override permittedWithdrawers;
+    mapping(address => bool) public isPermitted;
 
     constructor(address _tokenAddress){
         tokenAddress = _tokenAddress;
-        permittedDepositors[msg.sender] = true;
-        permittedWithdrawers[msg.sender] = true;
+        isPermitted[msg.sender] = true;
     }
 
-    function deposit(address from, uint _amount) external override { 
-        require(permittedDepositors[msg.sender] == true, "Not permitted to deposit");
+    modifier needsPermission(){
+        require(isPermitted[msg.sender] == true, "Not permitted");
+        _;
+    }
+
+    function deposit(address from, uint _amount) external override needsPermission {
         TransferInToken(tokenAddress, from, _amount);
         tokenBalance += _amount;
     }
 
-    function withdraw(address to, uint _amount) external override { 
-        require(permittedWithdrawers[msg.sender] == true, "Not permitted to withdraw");
+    function withdraw(address to, uint _amount) external override needsPermission {
         require(tokenBalance >= _amount, "Not enough balance");
         TransferToken(tokenAddress, to, _amount);
         tokenBalance -= _amount;
