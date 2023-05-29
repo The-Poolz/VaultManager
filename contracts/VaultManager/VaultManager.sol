@@ -8,10 +8,15 @@ import "poolz-helper-v2/contracts/GovManager.sol";
 
 contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
     mapping(uint => address) public VaultIdToVault;
-    mapping(address => uint[]) public TokenToVaultIds;
+    mapping(address => uint) public TokenToVaultId;
     uint public override TotalVaults;
 
     mapping(address => bool) public isPermitted;
+
+    modifier vaultExists(uint _vaultId){
+        require(VaultIdToVault[_vaultId] != address(0), "VaultManager: Vault not found");
+        _;
+    }
 
     function setPermitted(address _address, bool _value) external onlyOwnerOrGov{
         isPermitted[_address] = _value;
@@ -21,31 +26,49 @@ contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
         Vault newVault = new Vault(_tokenAddress);
         vaultId = TotalVaults;
         VaultIdToVault[vaultId] = address(newVault);
-        TokenToVaultIds[_tokenAddress].push(vaultId);
+        TokenToVaultId[_tokenAddress] = vaultId;
         TotalVaults++;
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
 
-    function DepositeByVaultId(uint _vaultId, address from, uint _amount) external override{
+    function DepositeByToken(address _tokenAddress, address from, uint _amount)
+        external
+        override
+        vaultExists(TokenToVaultId[_tokenAddress])
+        returns(uint vaultId)
+    {
         require(isPermitted[msg.sender], "VaultManager: Not permitted");
-        Vault(VaultIdToVault[_vaultId]).deposit(from, _amount);
-        emit Deposited(from, _amount);
+        vaultId = TokenToVaultId[_tokenAddress];
+        Vault(VaultIdToVault[vaultId]).deposit(from, _amount);
+        emit Deposited(vaultId, _tokenAddress, from, _amount);
     }
 
-    function WithdrawByVaultId(uint _vaultId, address to, uint _amount) external override{
+    function WithdrawByVaultId(uint _vaultId, address to, uint _amount)
+        external
+        override
+        vaultExists(_vaultId)
+    {
         require(isPermitted[msg.sender], "VaultManager: Not permitted");
-        Vault(VaultIdToVault[_vaultId]).withdraw(to, _amount);
-        emit Withdrawn(to, _amount);
+        Vault vault = Vault(VaultIdToVault[_vaultId]);
+        vault.withdraw(to, _amount);
+        emit Withdrawn(_vaultId, vault.tokenAddress(), to, _amount);
     }
 
-    function getVaultBalanceByVaultId(uint _vaultId) external override view returns(uint){
+    function getVaultBalanceByVaultId(uint _vaultId)
+        external
+        view
+        override
+        vaultExists(_vaultId)
+    returns(uint){
         return Vault(VaultIdToVault[_vaultId]).tokenBalance();
     }
 
-    function getVaultBalanceByTokenAddress(address _tokenAddress) external override view returns(uint totalBalance){
-        uint[] memory vaultIds = TokenToVaultIds[_tokenAddress];
-        for(uint i = 0; i < vaultIds.length; i++){
-            totalBalance += Vault(VaultIdToVault[vaultIds[i]]).tokenBalance();
-        }
+    function getVaultBalanceByToken(address _tokenAddress)
+        external
+        view
+        override
+        vaultExists(TokenToVaultId[_tokenAddress])
+    returns(uint){
+        return Vault(VaultIdToVault[TokenToVaultId[_tokenAddress]]).tokenBalance();
     }
 }
