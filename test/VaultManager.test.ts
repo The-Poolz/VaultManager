@@ -15,7 +15,7 @@ describe('VaultManager', function () {
     await token.deployed();
 
     const VaultManager = await ethers.getContractFactory('VaultManager');
-    vaultManager = (await VaultManager.deploy()) as VaultManager;
+    vaultManager = await VaultManager.deploy();
     await vaultManager.deployed();
 
     const signers = await ethers.getSigners();
@@ -63,8 +63,6 @@ describe('VaultManager', function () {
 
     const from = await owner.getAddress();
     const vaultId = 0; 
-
-    const id = await vaultManager.TokenToVaultId(token.address);
 
     await vaultManager.DepositByToken(token.address, from, amount);
 

@@ -15,7 +15,7 @@ describe('Vault', function () {
     await token.deployed();
 
     const Vault = await ethers.getContractFactory('Vault');
-    vault = (await Vault.deploy(token.address)) as Vault;
+    vault = await Vault.deploy(token.address);
     await vault.deployed();
 
     signers= await ethers.getSigners();
