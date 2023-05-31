@@ -22,10 +22,6 @@ contract Vault is IVault, ERC20Helper{
         return IERC20(tokenAddress).balanceOf(address(this));
     }
 
-    function deposit(address from, uint _amount) external override onlyManager {
-        TransferInToken(tokenAddress, from, _amount);
-    }
-
     function withdraw(address to, uint _amount) external override onlyManager {
         require(tokenBalance() >= _amount, "Not enough balance");
         TransferToken(tokenAddress, to, _amount);

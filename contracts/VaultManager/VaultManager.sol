@@ -18,37 +18,43 @@ contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
         _;
     }
 
+    modifier isPermittedToCall(){
+        require(isPermitted[msg.sender], "VaultManager: Not permitted");
+        _;
+    }
+
     function setPermitted(address _address, bool _value) external onlyOwnerOrGov{
         isPermitted[_address] = _value;
     }
 
     function CreateNewVault(address _tokenAddress) external override onlyOwnerOrGov returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
-        vaultId = TotalVaults;
+        vaultId = TotalVaults++;
         VaultIdToVault[vaultId] = address(newVault);
         TokenToVaultId[_tokenAddress] = vaultId;
-        TotalVaults++;
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
 
-    function DepositeByToken(address _tokenAddress, address from, uint _amount)
+    function DepositByToken(address _tokenAddress, address from, uint _amount)
         external
         override
+        isPermittedToCall
         vaultExists(TokenToVaultId[_tokenAddress])
         returns(uint vaultId)
     {
-        require(isPermitted[msg.sender], "VaultManager: Not permitted");
         vaultId = TokenToVaultId[_tokenAddress];
-        Vault(VaultIdToVault[vaultId]).deposit(from, _amount);
+        address vaultAddress = VaultIdToVault[vaultId];
+        require(_tokenAddress == Vault(vaultAddress).tokenAddress(), "VaultManager: token not approved");
+        IERC20(_tokenAddress).transferFrom(from, vaultAddress, _amount);
         emit Deposited(vaultId, _tokenAddress, from, _amount);
     }
 
     function WithdrawByVaultId(uint _vaultId, address to, uint _amount)
         external
         override
+        isPermittedToCall
         vaultExists(_vaultId)
     {
-        require(isPermitted[msg.sender], "VaultManager: Not permitted");
         Vault vault = Vault(VaultIdToVault[_vaultId]);
         vault.withdraw(to, _amount);
         emit Withdrawn(_vaultId, vault.tokenAddress(), to, _amount);
