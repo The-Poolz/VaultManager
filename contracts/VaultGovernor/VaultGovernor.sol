@@ -59,7 +59,7 @@ contract VaultGovernor is VaultGovernorState, VaultGovernorManagable {
     function createNewTokenProposal(
         address _tokenAddress, // The address of the token
         bool _permissionStatus // The permission status that will be set
-    ) external onlyPermitterOrAdmin returns(uint proposalId){
+    ) external onlyCreatorOrAdmin returns(uint proposalId){
         proposalId = TotalTokenProposals++;
         TokenProposal storage proposal = TokenProposals[proposalId];
         proposal.tokenAddress = _tokenAddress;
@@ -84,7 +84,7 @@ contract VaultGovernor is VaultGovernorState, VaultGovernorManagable {
         approvals = proposal.approvals;
     }
 
-    function approveTokenProposal(uint _proposalId) external onlyPermitterOrAdmin{
+    function approveTokenProposal(uint _proposalId) external onlyCreatorOrAdmin{
         TokenProposal storage proposal = TokenProposals[_proposalId];
         require(proposal.isExecuted == false, "VaultGov: Proposal Already Executed");
         require(proposal.isApproved[msg.sender] == false, "VaultGov: You have already approved this Proposal");
