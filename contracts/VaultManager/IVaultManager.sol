@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 interface IVaultManager{
     function TotalVaults() external view returns(uint);
+    function setPermitted(address _address, bool _value) external;
+    function setGovernor(address _govAddress) external;
     function CreateNewVault(address _tokenAddress) external returns(uint vaultId);
     function DeleteVault(address _tokenAddress) external returns(uint vaultId);
     function DepositByToken(address _tokenAddress, address from, uint _amount) external returns (uint vaultId);

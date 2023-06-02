@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./VaultGovernerState.sol";
-import "./VaultGovernerManagable.sol";
-import "../VaultManager/VaultManager.sol";
+import "./VaultGovernorState.sol";
+import "./VaultGovernorManagable.sol";
+import "../VaultManager/IVaultManager.sol";
 
-contract VaultGoverner is VaultGovernerState, VaultGovernerManagable {
+contract VaultGovernor is VaultGovernorState, VaultGovernorManagable {
 
     function createNewPermitProposal(
         address _vaultUser, // The user that will be permitted
@@ -49,7 +49,7 @@ contract VaultGoverner is VaultGovernerState, VaultGovernerManagable {
         PermitProposal storage proposal = PermitProposals[_proposalId];
         if(proposal.approvals == ApprovalsNeededForPermit){
             proposal.isExecuted = true;
-            VaultManager(VaultManagerAddress).setPermitted(proposal.vaultUser, proposal.permissionStatus);
+            IVaultManager(VaultManagerAddress).setPermitted(proposal.vaultUser, proposal.permissionStatus);
             emit PermitProposalExecuted(_proposalId, msg.sender, proposal.vaultUser, proposal.permissionStatus);
             return true;
         }
@@ -99,14 +99,18 @@ contract VaultGoverner is VaultGovernerState, VaultGovernerManagable {
         if(proposal.approvals == ApprovalNeededForCreate){
             proposal.isExecuted = true;
             if(proposal.permissionStatus){
-                VaultManager(VaultManagerAddress).CreateNewVault(proposal.tokenAddress);
+                IVaultManager(VaultManagerAddress).CreateNewVault(proposal.tokenAddress);
             } else {
-                VaultManager(VaultManagerAddress).DeleteVault(proposal.tokenAddress);
+                IVaultManager(VaultManagerAddress).DeleteVault(proposal.tokenAddress);
             }
             emit TokenProposalExecuted(_proposalId, msg.sender, proposal.tokenAddress, proposal.permissionStatus);
             return true;
         }
         return false;
+    }
+
+    function SetVaultManagerGovernor(address _newGov) external onlyAdmin {
+        IVaultManager(VaultManagerAddress).setGovernor(_newGov);
     }
 
 }

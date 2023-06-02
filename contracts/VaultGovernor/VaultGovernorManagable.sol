@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-abstract contract VaultGovernerManagable is AccessControl {
+abstract contract VaultGovernorManagable is AccessControl {
     bytes32 public constant PERMITTER_ROLE = keccak256("PERMITTER_ROLE");
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
 
@@ -21,7 +21,7 @@ abstract contract VaultGovernerManagable is AccessControl {
     modifier onlyAdmin() {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "VaultGoverner: Not admin"
+            "VaultGovernor: Not admin"
         );
         _;
     }
@@ -30,7 +30,7 @@ abstract contract VaultGovernerManagable is AccessControl {
         require(
             hasRole(CREATOR_ROLE, msg.sender) ||
                 hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "VaultGoverner: Not creator or admin"
+            "VaultGovernor: Not creator or admin"
         );
         _;
     }
@@ -39,7 +39,7 @@ abstract contract VaultGovernerManagable is AccessControl {
         require(
             hasRole(PERMITTER_ROLE, msg.sender) ||
                 hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "VaultGoverner: Not permitter or admin"
+            "VaultGovernor: Not permitter or admin"
         );
         _;
     }

@@ -4,14 +4,19 @@ pragma solidity ^0.8.0;
 import "./IVaultManager.sol";
 import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
-import "poolz-helper-v2/contracts/GovManager.sol";
 
-contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
+contract VaultManager is IVaultManager, VaultManagerEvents{
     mapping(uint => address) public VaultIdToVault;
     mapping(address => uint) public TokenToVaultId;
     uint public override TotalVaults;
 
     mapping(address => bool) public isPermitted;
+
+    address public Governor;
+
+    constructor(address _governor){
+        Governor = _governor;
+    }
 
     modifier vaultExists(uint _vaultId){
         require(VaultIdToVault[_vaultId] != address(0), "VaultManager: Vault not found");
@@ -23,11 +28,20 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    function setPermitted(address _address, bool _value) external onlyOwnerOrGov{
+    modifier onlyGovernor() {
+        require(msg.sender == Governor, "VaultManager: Not governor");
+        _;
+    }
+
+    function setPermitted(address _address, bool _value) external override onlyGovernor {
         isPermitted[_address] = _value;
     }
 
-    function CreateNewVault(address _tokenAddress) external override onlyOwnerOrGov returns(uint vaultId){
+    function setGovernor(address _newGov) external override onlyGovernor {
+        Governor = _newGov;
+    }
+
+    function CreateNewVault(address _tokenAddress) external override onlyGovernor returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = TotalVaults++;
         VaultIdToVault[vaultId] = address(newVault);
@@ -38,7 +52,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function DeleteVault(address _tokenAddress)
         external
         override
-        onlyOwnerOrGov
+        onlyGovernor
         vaultExists(TokenToVaultId[_tokenAddress])
         returns (uint vaultId)
     {
