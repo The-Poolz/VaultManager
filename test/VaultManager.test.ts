@@ -13,13 +13,14 @@ describe('VaultManager', function () {
     const Token = await ethers.getContractFactory('ERC20Token');
     token = await Token.deploy("Token", "TKN");
     await token.deployed();
-
-    const VaultManager = await ethers.getContractFactory('VaultManager');
-    vaultManager = await VaultManager.deploy();
-    await vaultManager.deployed();
-
+    
     const signers = await ethers.getSigners();
     owner = signers[0]; 
+
+    const VaultManager = await ethers.getContractFactory('VaultManager');
+    vaultManager = await VaultManager.deploy(owner.getAddress());
+    await vaultManager.deployed();
+
 
     await vaultManager.setPermitted(owner.getAddress(), true);
   });
