@@ -34,6 +34,21 @@ contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
         TokenToVaultId[_tokenAddress] = vaultId;
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
+    
+    function DeleteVault(address _tokenAddress)
+        external
+        override
+        onlyOwnerOrGov
+        vaultExists(TokenToVaultId[_tokenAddress])
+        returns (uint vaultId)
+    {
+        Vault vault = Vault(VaultIdToVault[TokenToVaultId[_tokenAddress]]);
+        require(vault.tokenBalance() == 0, "VaultManager: Vault not empty");
+        vaultId = TokenToVaultId[_tokenAddress];
+        delete VaultIdToVault[vaultId];
+        delete TokenToVaultId[_tokenAddress];
+        emit VaultDeleted(vaultId, _tokenAddress);
+    }
 
     function DepositByToken(address _tokenAddress, address from, uint _amount)
         external
