@@ -46,12 +46,12 @@ describe('VaultManager', function () {
   });
 
   it('should create a new vault', async function () {
-    await vaultManager.CreateNewVault(token.address);
+    await vaultManager.createNewVault(token.address);
 
-    const totalVaults = await vaultManager.TotalVaults();
+    const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
 
-    const vaultAddress = await vaultManager.VaultIdToVault(totalVaults.sub(1));
+    const vaultAddress = await vaultManager.vaultIdToVault(totalVaults.sub(1));
     expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
   });
 
@@ -59,12 +59,12 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    await vaultManager.CreateNewVault(token.address);
+    await vaultManager.createNewVault(token.address);
 
     const from = await owner.getAddress();
     const vaultId = 0; 
 
-    await vaultManager.DepositByToken(token.address, from, amount);
+    await vaultManager.depositByToken(token.address, from, amount);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     expect(vaultBalance).to.equal(amount);
@@ -74,15 +74,15 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    await vaultManager.CreateNewVault(token.address);
+    await vaultManager.createNewVault(token.address);
 
     const from = await owner.getAddress();
     const signers = await ethers.getSigners()
     const to = signers[1].address;
     const vaultId = 0; 
-    await vaultManager.DepositByToken(token.address, from, amount);
+    await vaultManager.depositByToken(token.address, from, amount);
 
-    await vaultManager.WithdrawByVaultId(vaultId, to, amount);
+    await vaultManager.withdrawByVaultId(vaultId, to, amount);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     expect(vaultBalance).to.equal(0);
