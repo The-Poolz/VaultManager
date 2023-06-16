@@ -10,6 +10,9 @@ contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
     mapping(uint => address) public VaultIdToVault;
     mapping(address => uint) public TokenToVaultId;
     uint public override TotalVaults;
+    mapping(uint => bool) public isDepositActiveForVaultId;
+    mapping(uint => bool) public isWithdrawalActiveForVaultId;
+
 
     mapping(address => bool) public isPermitted;
 
@@ -23,8 +26,26 @@ contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
         _;
     }
 
+    modifier isDepositActive(uint _vaultId){
+        require(isDepositActiveForVaultId[_vaultId], "VaultManager: Deposits are frozen");
+        _;
+    }
+
+    modifier isWithdrawalActive(uint _vaultId){
+        require(isWithdrawalActiveForVaultId[_vaultId], "VaultManager: Withdrawals are frozen");
+        _;
+    }
+
     function setPermitted(address _address, bool _value) external onlyOwnerOrGov{
         isPermitted[_address] = _value;
+    }
+
+    function setDepositActiveForVaultId(uint _vaultId, bool _value) external onlyOwnerOrGov vaultExists(_vaultId){
+        isDepositActiveForVaultId[_vaultId] = _value;
+    }
+
+    function setWithdrawalActiveForVaultId(uint _vaultId, bool _value) external onlyOwnerOrGov vaultExists(_vaultId){
+        isWithdrawalActiveForVaultId[_vaultId] = _value;
     }
 
     function CreateNewVault(address _tokenAddress) external override onlyOwnerOrGov returns(uint vaultId){
@@ -32,29 +53,17 @@ contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
         vaultId = TotalVaults++;
         VaultIdToVault[vaultId] = address(newVault);
         TokenToVaultId[_tokenAddress] = vaultId;
+        isDepositActiveForVaultId[vaultId] = true;
+        isWithdrawalActiveForVaultId[vaultId] = true;
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
     
-    function DeleteVault(address _tokenAddress)
-        external
-        override
-        onlyOwnerOrGov
-        vaultExists(TokenToVaultId[_tokenAddress])
-        returns (uint vaultId)
-    {
-        Vault vault = Vault(VaultIdToVault[TokenToVaultId[_tokenAddress]]);
-        require(vault.tokenBalance() == 0, "VaultManager: Vault not empty");
-        vaultId = TokenToVaultId[_tokenAddress];
-        delete VaultIdToVault[vaultId];
-        delete TokenToVaultId[_tokenAddress];
-        emit VaultDeleted(vaultId, _tokenAddress);
-    }
-
     function DepositByToken(address _tokenAddress, address from, uint _amount)
         external
         override
         isPermittedToCall
         vaultExists(TokenToVaultId[_tokenAddress])
+        isDepositActive(TokenToVaultId[_tokenAddress])
         returns(uint vaultId)
     {
         vaultId = TokenToVaultId[_tokenAddress];
@@ -69,6 +78,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents,GovManager{
         override
         isPermittedToCall
         vaultExists(_vaultId)
+        isWithdrawalActive(_vaultId)
     {
         Vault vault = Vault(VaultIdToVault[_vaultId]);
         vault.withdraw(to, _amount);
