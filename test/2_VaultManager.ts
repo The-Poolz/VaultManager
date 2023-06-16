@@ -13,13 +13,13 @@ describe('VaultManager', function () {
     const Token = await ethers.getContractFactory('ERC20Token');
     token = await Token.deploy("Token", "TKN");
     await token.deployed();
+    
+    const signers = await ethers.getSigners();
+    owner = signers[0]; 
 
     const VaultManager = await ethers.getContractFactory('VaultManager');
     vaultManager = await VaultManager.deploy();
     await vaultManager.deployed();
-
-    const signers = await ethers.getSigners();
-    owner = signers[0]; 
 
     await vaultManager.setPermitted(owner.getAddress(), true);
   });
@@ -46,23 +46,30 @@ describe('VaultManager', function () {
   });
 
   it('should create a new vault', async function () {
+    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
     await vaultManager.createNewVault(token.address);
 
     const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
+    expect(vaultId).to.equal(totalVaults.sub(1).toString());
 
-    const vaultAddress = await vaultManager.vaultIdToVault(totalVaults.sub(1));
+    const vaultAddress = await vaultManager.vaultIdToVault(vaultId);
     expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
+
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    expect(isDepositActive).to.equal(true);
+    expect(isWithdrawActive).to.equal(true);
   });
 
   it('should deposit tokens to a vault', async function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
+    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
     await vaultManager.createNewVault(token.address);
 
     const from = await owner.getAddress();
-    const vaultId = 0; 
 
     await vaultManager.depositByToken(token.address, from, amount);
 
@@ -91,4 +98,5 @@ describe('VaultManager', function () {
     expect(receiverBalance).to.equal(amount);
   });
 
+  
 });
