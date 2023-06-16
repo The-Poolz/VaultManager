@@ -1,4 +1,4 @@
-import { expect, assert } from 'chai';
+import { expect } from 'chai';
 import { Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import { VaultManager } from '../typechain-types/contracts/VaultManager';

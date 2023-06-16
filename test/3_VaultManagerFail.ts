@@ -1,4 +1,4 @@
-import { expect, assert } from 'chai';
+import { expect } from 'chai';
 import { Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import { VaultManager } from '../typechain-types/contracts/VaultManager';
@@ -9,7 +9,6 @@ describe('Vault Manager Fail', function () {
   describe("OnlyGovernor Functions", function() {
     let vaultManager: VaultManager;
     let token: ERC20Token;
-    let governor: Signer;
     let nonGovernor: Signer;
 
     beforeEach(async function () {
@@ -18,7 +17,6 @@ describe('Vault Manager Fail', function () {
         await token.deployed();
         
         const signers = await ethers.getSigners();
-        governor = signers[0];
         nonGovernor = signers[1];
 
         const VaultManager = await ethers.getContractFactory('VaultManager');
@@ -155,7 +153,6 @@ describe('Vault Manager Fail', function () {
     let vaultManager: VaultManager;
     let token: ERC20Token;
     let governor: Signer;
-    let nonPermitted: Signer;
     let vaultId: string
 
     beforeEach(async function () {
@@ -165,7 +162,6 @@ describe('Vault Manager Fail', function () {
         
         const signers = await ethers.getSigners();
         governor = signers[0];
-        nonPermitted = signers[1];
 
         const VaultManager = await ethers.getContractFactory('VaultManager');
         vaultManager = await VaultManager.deploy();
