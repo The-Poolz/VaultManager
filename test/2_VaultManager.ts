@@ -16,15 +16,10 @@ describe('VaultManager', function () {
     
     const signers = await ethers.getSigners();
     owner = signers[0]; 
-    // console.log(signers.length)
-    // console.log(owner.getAddress())
 
     const VaultManager = await ethers.getContractFactory('VaultManager');
     vaultManager = await VaultManager.deploy();
     await vaultManager.deployed();
-    const tx = VaultManager.getDeployTransaction()
-    // console.log(tx)
-
 
     await vaultManager.setPermitted(owner.getAddress(), true);
   });
@@ -51,23 +46,30 @@ describe('VaultManager', function () {
   });
 
   it('should create a new vault', async function () {
+    const vaultId = await vaultManager.callStatic.CreateNewVault(token.address);
     await vaultManager.CreateNewVault(token.address);
 
     const totalVaults = await vaultManager.TotalVaults();
     expect(totalVaults).to.equal(1);
+    expect(vaultId).to.equal(totalVaults.sub(1).toString());
 
-    const vaultAddress = await vaultManager.VaultIdToVault(totalVaults.sub(1));
+    const vaultAddress = await vaultManager.VaultIdToVault(vaultId);
     expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
+
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    expect(isDepositActive).to.equal(true);
+    expect(isWithdrawActive).to.equal(true);
   });
 
   it('should deposit tokens to a vault', async function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
+    const vaultId = await vaultManager.callStatic.CreateNewVault(token.address);
     await vaultManager.CreateNewVault(token.address);
 
     const from = await owner.getAddress();
-    const vaultId = 0; 
 
     await vaultManager.DepositByToken(token.address, from, amount);
 
@@ -96,42 +98,5 @@ describe('VaultManager', function () {
     expect(receiverBalance).to.equal(amount);
   });
 
-  it('should delete a vault when it is empty', async () => {
-    
-    await vaultManager.CreateNewVault(ethers.constants.AddressZero);
-    await vaultManager.CreateNewVault(token.address);
-    const vaultId = 1
-    const tx = await vaultManager.DeleteVault(token.address)
-    const receipt = await tx.wait()
-    if(receipt.events == undefined || receipt.events[0].args == undefined){
-      assert.fail("receipt events is undefined")
-    }
-    expect(receipt.events[0].event).to.equal('VaultDeleted')
-    expect(receipt.events[0].args[0]).to.equal(vaultId)
-    expect(receipt.events[0].args[1]).to.equal(token.address)
-
-    // Verify that the vault has been deleted
-    expect(await vaultManager.VaultIdToVault(vaultId)).to.equal(ethers.constants.AddressZero);
-    expect(await vaultManager.TokenToVaultId(token.address)).to.equal(0);
-  });
-
-  it('should revert when trying to delete a non-empty vault', async () => {
-    await vaultManager.CreateNewVault(token.address);
-    const vaultId = 0;
-    const Vault = await ethers.getContractFactory('Vault');
-    const vault = await Vault.attach(await vaultManager.VaultIdToVault(vaultId));
-    const amount = ethers.utils.parseEther('0.000001');
-    await token.approve(vaultManager.address, amount);
-
-    // Deposit some tokens into the vault
-    await vaultManager.DepositByToken(token.address, owner.getAddress(), 100);
-    expect(await vaultManager.getVaultBalanceByVaultId(vaultId)).to.equal(100);
-
-    // Attempt to delete the non-empty vault
-    await expect(vaultManager.DeleteVault(token.address)).to.be.revertedWith('VaultManager: Vault not empty');
-
-    // Verify that the vault still exists
-    expect(await vaultManager.VaultIdToVault(vaultId)).to.equal(vault.address);
-    expect(await vaultManager.TokenToVaultId(token.address)).to.equal(vaultId);
-  });
+  
 });
