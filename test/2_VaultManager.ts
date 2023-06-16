@@ -46,14 +46,14 @@ describe('VaultManager', function () {
   });
 
   it('should create a new vault', async function () {
-    const vaultId = await vaultManager.callStatic.CreateNewVault(token.address);
-    await vaultManager.CreateNewVault(token.address);
+    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
+    await vaultManager.createNewVault(token.address);
 
-    const totalVaults = await vaultManager.TotalVaults();
+    const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
     expect(vaultId).to.equal(totalVaults.sub(1).toString());
 
-    const vaultAddress = await vaultManager.VaultIdToVault(vaultId);
+    const vaultAddress = await vaultManager.vaultIdToVault(vaultId);
     expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
 
     const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
@@ -66,12 +66,12 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    const vaultId = await vaultManager.callStatic.CreateNewVault(token.address);
-    await vaultManager.CreateNewVault(token.address);
+    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
+    await vaultManager.createNewVault(token.address);
 
     const from = await owner.getAddress();
 
-    await vaultManager.DepositByToken(token.address, from, amount);
+    await vaultManager.depositByToken(token.address, from, amount);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     expect(vaultBalance).to.equal(amount);
@@ -81,15 +81,15 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    await vaultManager.CreateNewVault(token.address);
+    await vaultManager.createNewVault(token.address);
 
     const from = await owner.getAddress();
     const signers = await ethers.getSigners()
     const to = signers[1].address;
     const vaultId = 0; 
-    await vaultManager.DepositByToken(token.address, from, amount);
+    await vaultManager.depositByToken(token.address, from, amount);
 
-    await vaultManager.WithdrawByVaultId(vaultId, to, amount);
+    await vaultManager.withdrawByVaultId(vaultId, to, amount);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     expect(vaultBalance).to.equal(0);
