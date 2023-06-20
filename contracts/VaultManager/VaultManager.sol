@@ -9,7 +9,7 @@ import "poolz-helper-v2/contracts/GovManager.sol";
 contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     mapping(uint => address) public vaultIdToVault;
     mapping(address => uint) public tokenToVaultId;
-    uint public override totalVaults;
+    uint public totalVaults;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
 
@@ -47,7 +47,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         isWithdrawalActiveForVaultId[_vaultId] = _value;
     }
 
-    function createNewVault(address _tokenAddress) external override onlyOwnerOrGov returns(uint vaultId){
+    function createNewVault(address _tokenAddress) external onlyOwnerOrGov returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
@@ -87,7 +87,6 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function getVaultBalanceByVaultId(uint _vaultId)
         external
         view
-        override
         vaultExists(_vaultId)
     returns(uint){
         return Vault(vaultIdToVault[_vaultId]).tokenBalance();
@@ -96,7 +95,6 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function getVaultBalanceByToken(address _tokenAddress)
         external
         view
-        override
         vaultExists(tokenToVaultId[_tokenAddress])
     returns(uint){
         return Vault(vaultIdToVault[tokenToVaultId[_tokenAddress]]).tokenBalance();
