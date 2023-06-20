@@ -7,5 +7,4 @@ interface IVaultManager{
     function depositByToken(address _tokenAddress, address from, uint _amount) external returns (uint vaultId);
     function withdrawByVaultId(uint _vaultId, address to, uint _amount) external;
     function getVaultBalanceByVaultId(uint _vaultId) external view returns(uint);
-    function getVaultBalanceByToken(address _tokenAddress) external view returns(uint);
 }

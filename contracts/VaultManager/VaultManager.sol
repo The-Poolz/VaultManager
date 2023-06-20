@@ -8,10 +8,11 @@ import "poolz-helper-v2/contracts/GovManager.sol";
 
 contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     mapping(uint => address) public vaultIdToVault;
-    mapping(address => uint) public tokenToVaultId;
-    uint public override totalVaults;
+    mapping(address => uint[]) public tokenToVaultId;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
+    address[] public allTokens; // just an array of all tokens
+    uint public override totalVaults;
 
     mapping(address => bool) public isPermitted;
 
@@ -51,7 +52,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
-        tokenToVaultId[_tokenAddress] = vaultId;
+        tokenToVaultId[_tokenAddress].push(vaultId);
         isDepositActiveForVaultId[vaultId] = true;
         isWithdrawalActiveForVaultId[vaultId] = true;
         emit NewVaultCreated(vaultId, _tokenAddress);
@@ -61,11 +62,11 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         external
         override
         isPermittedToCall
-        vaultExists(tokenToVaultId[_tokenAddress])
-        isDepositActive(tokenToVaultId[_tokenAddress])
+        vaultExists(getCurrentVaultIdByToken(_tokenAddress))
+        isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns(uint vaultId)
     {
-        vaultId = tokenToVaultId[_tokenAddress];
+        vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
         require(_tokenAddress == Vault(vaultAddress).tokenAddress(), "VaultManager: token not approved");
         IERC20(_tokenAddress).transferFrom(from, vaultAddress, _amount);
@@ -85,7 +86,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     }
 
     function getVaultBalanceByVaultId(uint _vaultId)
-        external
+        public
         view
         override
         vaultExists(_vaultId)
@@ -93,12 +94,35 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         return Vault(vaultIdToVault[_vaultId]).tokenBalance();
     }
 
-    function getVaultBalanceByToken(address _tokenAddress)
+    function getCurrentVaultBalanceByToken(address _tokenAddress)
         external
         view
-        override
-        vaultExists(tokenToVaultId[_tokenAddress])
+        vaultExists(getCurrentVaultIdByToken(_tokenAddress))
     returns(uint){
-        return Vault(vaultIdToVault[tokenToVaultId[_tokenAddress]]).tokenBalance();
+        return Vault(vaultIdToVault[getCurrentVaultIdByToken(_tokenAddress)]).tokenBalance();
+    }
+
+    function getAllVaultBalanceByToken(address _tokenAddress)
+        external
+        view
+        vaultExists(getCurrentVaultIdByToken(_tokenAddress))
+        returns(uint balance)
+    {
+        for(uint i=0; i<getTotalVaultsByToken(_tokenAddress); i++){
+            balance += Vault(vaultIdToVault[i]).tokenBalance();
+        }
+    }
+
+    function getTotalVaultsByToken(address _tokenAddress) public view returns(uint _totalVaults) {
+        _totalVaults = tokenToVaultId[_tokenAddress].length;
+    }
+
+    function getCurrentVaultIdByToken(address _tokenAddress)
+        public
+        view
+        returns(uint vaultId)
+    {
+        require(getTotalVaultsByToken(_tokenAddress) > 0, "VaultManager: No vaults for this token");
+        vaultId = tokenToVaultId[_tokenAddress][getTotalVaultsByToken(_tokenAddress) - 1];
     }
 }
