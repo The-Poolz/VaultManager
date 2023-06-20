@@ -12,17 +12,17 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
     address[] public allTokens; // just an array of all tokens
-    uint public override totalVaults;
+    uint public totalVaults;
 
-    mapping(address => bool) public isPermitted;
+    address public permittedAddress;
 
     modifier vaultExists(uint _vaultId){
         require(vaultIdToVault[_vaultId] != address(0), "VaultManager: Vault not found");
         _;
     }
 
-    modifier isPermittedToCall(){
-        require(isPermitted[msg.sender], "VaultManager: Not permitted");
+    modifier isPermitted(){
+        require(permittedAddress == msg.sender, "VaultManager: Not permitted");
         _;
     }
 
@@ -36,19 +36,20 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    function setPermitted(address _address, bool _value) external onlyOwnerOrGov{
-        isPermitted[_address] = _value;
+    function setPermitted(address _address) external onlyOwnerOrGov{
+        permittedAddress = _address;
     }
 
-    function setDepositActiveForVaultId(uint _vaultId, bool _value) external onlyOwnerOrGov vaultExists(_vaultId){
-        isDepositActiveForVaultId[_vaultId] = _value;
+    function setActiveStatusForVaultId(uint _vaultId, bool _depositStatus, bool _withdrawStatus)
+        external
+        onlyOwnerOrGov
+        vaultExists(_vaultId)
+    {
+        isDepositActiveForVaultId[_vaultId] = _depositStatus;
+        isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
     }
 
-    function setWithdrawalActiveForVaultId(uint _vaultId, bool _value) external onlyOwnerOrGov vaultExists(_vaultId){
-        isWithdrawalActiveForVaultId[_vaultId] = _value;
-    }
-
-    function createNewVault(address _tokenAddress) external override onlyOwnerOrGov returns(uint vaultId){
+    function createNewVault(address _tokenAddress) external onlyOwnerOrGov returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
@@ -61,7 +62,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function depositByToken(address _tokenAddress, address from, uint _amount)
         external
         override
-        isPermittedToCall
+        isPermitted
         vaultExists(getCurrentVaultIdByToken(_tokenAddress))
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns(uint vaultId)
@@ -76,7 +77,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function withdrawByVaultId(uint _vaultId, address to, uint _amount)
         external
         override
-        isPermittedToCall
+        isPermitted
         vaultExists(_vaultId)
         isWithdrawalActive(_vaultId)
     {
@@ -88,7 +89,6 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function getVaultBalanceByVaultId(uint _vaultId)
         public
         view
-        override
         vaultExists(_vaultId)
     returns(uint){
         return Vault(vaultIdToVault[_vaultId]).tokenBalance();

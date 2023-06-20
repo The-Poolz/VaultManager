@@ -31,23 +31,15 @@ describe('Vault Manager Fail', function () {
 
     it("should fail to setPermitted if called by non-governor", async () => {
         const permittedAddress = await nonGovernor.getAddress();
-        await expect(vaultManager.connect(nonGovernor).setPermitted(permittedAddress, true))
+        await expect(vaultManager.connect(nonGovernor).setPermitted(permittedAddress))
             .to.be.revertedWith("Authorization Error");
     })
 
-    it("should fail to set deposit active status if called by non owner", async () => {
+    it("should fail to set active status if called by non owner", async () => {
         const vaultId = await vaultManager.callStatic.createNewVault(token.address);
         await vaultManager.createNewVault(token.address);
 
-        await expect(vaultManager.connect(nonGovernor).setDepositActiveForVaultId(vaultId, true))
-            .to.be.revertedWith("Authorization Error");
-    })
-
-    it("should fail to set withdraw active status if called by non owner", async () => {
-        const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-        await vaultManager.createNewVault(token.address);
-
-        await expect(vaultManager.connect(nonGovernor).setWithdrawalActiveForVaultId(vaultId, true))
+        await expect(vaultManager.connect(nonGovernor).setActiveStatusForVaultId(vaultId, true, true))
             .to.be.revertedWith("Authorization Error");
     })
 
@@ -72,16 +64,11 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress(), true);
+        await vaultManager.setPermitted(governor.getAddress());
     });
 
     it("should fail to set deposit active status", async () => {
-        await expect(vaultManager.setDepositActiveForVaultId(fakeVaultId, true))
-            .to.be.revertedWith("VaultManager: Vault not found");
-    })
-
-    it("should fail to set withdraw active status", async () => {
-        await expect(vaultManager.setWithdrawalActiveForVaultId(fakeVaultId, true))
+        await expect(vaultManager.setActiveStatusForVaultId(fakeVaultId, true, true))
             .to.be.revertedWith("VaultManager: Vault not found");
     })
 
@@ -133,7 +120,7 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress(), true);
+        await vaultManager.setPermitted(governor.getAddress());
         vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
         await vaultManager.createNewVault(token.address);
     });
@@ -167,11 +154,10 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress(), true);
+        await vaultManager.setPermitted(governor.getAddress());
         vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
         await vaultManager.createNewVault(token.address);
-        await vaultManager.setDepositActiveForVaultId(vaultId, false);
-        await vaultManager.setWithdrawalActiveForVaultId(vaultId, false);
+        await vaultManager.setActiveStatusForVaultId(vaultId, false, false);
     });
 
     it("should fail to deposit", async () => {
