@@ -39,12 +39,13 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         isPermitted[_address] = _value;
     }
 
-    function setDepositActiveForVaultId(uint _vaultId, bool _value) external onlyOwnerOrGov vaultExists(_vaultId){
-        isDepositActiveForVaultId[_vaultId] = _value;
-    }
-
-    function setWithdrawalActiveForVaultId(uint _vaultId, bool _value) external onlyOwnerOrGov vaultExists(_vaultId){
-        isWithdrawalActiveForVaultId[_vaultId] = _value;
+    function setActiveStatusForVaultId(uint _vaultId, bool _depositStatus, bool _withdrawStatus)
+        external
+        onlyOwnerOrGov
+        vaultExists(_vaultId)
+    {
+        isDepositActiveForVaultId[_vaultId] = _depositStatus;
+        isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
     }
 
     function createNewVault(address _tokenAddress) external override onlyOwnerOrGov returns(uint vaultId){
