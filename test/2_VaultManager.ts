@@ -21,28 +21,27 @@ describe('VaultManager', function () {
     vaultManager = await VaultManager.deploy();
     await vaultManager.deployed();
 
-    await vaultManager.setPermitted(owner.getAddress(), true);
+    await vaultManager.setPermitted(owner.getAddress());
   });
 
   it('should set address as permitted', async function () {
     const signers = await ethers.getSigners();
     const permittedAddress = signers[1].address; 
 
-    await vaultManager.setPermitted(permittedAddress, true);
+    await vaultManager.setPermitted(permittedAddress);
 
-    const isPermitted = await vaultManager.isPermitted(permittedAddress);
-    expect(isPermitted).to.equal(true);
+    const isPermitted = await vaultManager.permittedAddress();
+    expect(isPermitted).to.equal(permittedAddress);
   });
 
   it('should unset address as permitted', async function () {
     const signers = await ethers.getSigners();
     const permittedAddress = signers[1].address; 
 
-    await vaultManager.setPermitted(permittedAddress, true);
-    await vaultManager.setPermitted(permittedAddress, false);
+    await vaultManager.setPermitted(permittedAddress);
 
-    const isPermitted = await vaultManager.isPermitted(permittedAddress);
-    expect(isPermitted).to.equal(false);
+    const isPermitted = await vaultManager.permittedAddress();
+    expect(isPermitted).to.equal(permittedAddress);
   });
 
   it('should create a new vault', async function () {

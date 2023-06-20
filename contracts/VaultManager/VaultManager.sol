@@ -12,16 +12,15 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     uint public totalVaults;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
-
-    mapping(address => bool) public isPermitted;
+    address public permittedAddress;
 
     modifier vaultExists(uint _vaultId){
         require(vaultIdToVault[_vaultId] != address(0), "VaultManager: Vault not found");
         _;
     }
 
-    modifier isPermittedToCall(){
-        require(isPermitted[msg.sender], "VaultManager: Not permitted");
+    modifier isPermitted(){
+        require(permittedAddress == msg.sender, "VaultManager: Not permitted");
         _;
     }
 
@@ -35,8 +34,8 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    function setPermitted(address _address, bool _value) external onlyOwnerOrGov{
-        isPermitted[_address] = _value;
+    function setPermitted(address _address) external onlyOwnerOrGov{
+        permittedAddress = _address;
     }
 
     function setActiveStatusForVaultId(uint _vaultId, bool _depositStatus, bool _withdrawStatus)
@@ -61,7 +60,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function depositByToken(address _tokenAddress, address from, uint _amount)
         external
         override
-        isPermittedToCall
+        isPermitted
         vaultExists(tokenToVaultId[_tokenAddress])
         isDepositActive(tokenToVaultId[_tokenAddress])
         returns(uint vaultId)
@@ -76,7 +75,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function withdrawByVaultId(uint _vaultId, address to, uint _amount)
         external
         override
-        isPermittedToCall
+        isPermitted
         vaultExists(_vaultId)
         isWithdrawalActive(_vaultId)
     {
