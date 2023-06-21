@@ -99,4 +99,16 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     returns(uint){
         return Vault(vaultIdToVault[tokenToVaultId[_tokenAddress]]).tokenBalance();
     }
+
+    function vaultIdToTokenAddress(
+        uint _vaultId
+    )
+        external
+        view
+        override
+        vaultExists(_vaultId)
+        returns (address token)
+    {
+        token = Vault(vaultIdToVault[_vaultId]).tokenAddress();
+    }
 }
