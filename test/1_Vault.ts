@@ -45,3 +45,41 @@ describe('Vault', function () {
   });
 
 });
+
+describe("Fail Tests", function() {
+  let vault: Vault;
+  let token: ERC20Token;
+  let signers: SignerWithAddress[]
+
+  beforeEach(async () => {
+    const Token = await ethers.getContractFactory('ERC20Token');
+    token = await Token.deploy("Token", "TKN");
+    await token.deployed();
+
+    const Vault = await ethers.getContractFactory('Vault');
+    vault = await Vault.deploy(token.address);
+    await vault.deployed();
+
+    signers= await ethers.getSigners();
+  })
+
+  it('should fail if non-manager tries to withdraw tokens', async function () {
+    const amount = ethers.utils.parseEther('0.000001');
+    await token.transfer(vault.address, amount);
+
+    const receiver = signers[1].address;
+    await expect(vault.connect(signers[1]).withdraw(receiver, amount))
+      .to.be.revertedWith("Vault: Only manager can call this function");
+  });
+
+  it('should fail if vault balance is less than withdrawal amount', async function () {
+    const amount = ethers.utils.parseEther('0.000001');
+    await token.transfer(vault.address, amount);
+
+    const receiver = signers[1].address;
+    await expect(vault.withdraw(receiver, amount.mul(2)))
+      .to.be.revertedWith("Vault: Not enough balance");
+  });
+
+
+})

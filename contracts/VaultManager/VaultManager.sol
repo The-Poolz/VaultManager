@@ -5,6 +5,7 @@ import "./IVaultManager.sol";
 import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
 import "poolz-helper-v2/contracts/GovManager.sol";
+import "poolz-helper-v2/contracts/Array.sol";
 
 contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     mapping(uint => address) public vaultIdToVault;
@@ -53,6 +54,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
         tokenToVaultIds[_tokenAddress].push(vaultId);
+        Array.addIfNotExsist(allTokens, _tokenAddress);
         isDepositActiveForVaultId[vaultId] = true;
         isWithdrawalActiveForVaultId[vaultId] = true;
         emit NewVaultCreated(vaultId, _tokenAddress);
@@ -121,5 +123,13 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     {
         require(getTotalVaultsByToken(_tokenAddress) > 0, "VaultManager: No vaults for this token");
         vaultId = tokenToVaultIds[_tokenAddress][getTotalVaultsByToken(_tokenAddress) - 1];
+    }
+
+    function getAllTokens() external view returns(address[] memory){
+        return allTokens;
+    }
+
+    function getTotalNumberOfTokens() external view returns(uint){
+        return allTokens.length;
     }
 }
