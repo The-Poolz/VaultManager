@@ -62,6 +62,15 @@ describe('VaultManager', function () {
     expect(isWithdrawActive).to.equal(true);
   });
 
+  it('should get the token address', async function () {
+    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
+    await vaultManager.createNewVault(token.address);
+
+    const tokenAddress = await vaultManager.vaultIdToTokenAddress(vaultId);
+
+    expect(tokenAddress).to.equal(token.address);
+  });
+
   it('should deposit tokens to a vault', async function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);

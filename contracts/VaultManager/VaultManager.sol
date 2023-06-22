@@ -132,4 +132,16 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     function getTotalNumberOfTokens() external view returns(uint){
         return allTokens.length;
     }
+
+    function vaultIdToTokenAddress(
+        uint _vaultId
+    )
+        external
+        view
+        override
+        vaultExists(_vaultId)
+        returns (address token)
+    {
+        token = Vault(vaultIdToVault[_vaultId]).tokenAddress();
+    }
 }
