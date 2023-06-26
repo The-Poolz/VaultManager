@@ -69,7 +69,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     {
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
-        require(_tokenAddress == Vault(vaultAddress).tokenAddress(), "VaultManager: token not approved");
+        assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
         IERC20(_tokenAddress).transferFrom(from, vaultAddress, _amount);
         emit Deposited(vaultId, _tokenAddress, from, _amount);
     }
