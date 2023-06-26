@@ -93,6 +93,11 @@ describe('Vault Manager Fail', function () {
             .to.be.revertedWith("VaultManager: No vaults for this token");
     })
 
+    it("should fail to return tokenAddress for vaultId which does not", async () => {
+        await expect(vaultManager.vaultIdToTokenAddress(fakeVaultId))
+            .to.be.revertedWith("VaultManager: Vault not found");
+    })
+
     it("should return zero for mappings", async () => {
         expect(await vaultManager.vaultIdToVault(fakeVaultId)).to.equal(ethers.constants.AddressZero);
         expect(await vaultManager.isDepositActiveForVaultId(fakeVaultId)).to.equal(false);
