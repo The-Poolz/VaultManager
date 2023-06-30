@@ -74,7 +74,7 @@ describe('Vault Manager Fail', function () {
 
     it("should fail to deposit", async () => {
         await expect(vaultManager.depositByToken(token.address, governor.getAddress(), 100))
-            .to.be.revertedWith("VaultManager: Vault not found");
+            .to.be.revertedWith("VaultManager: No vaults for this token");
     })
 
     it("should fail to withdraw", async () => {
@@ -89,7 +89,12 @@ describe('Vault Manager Fail', function () {
     it("should fail to return balance", async () => {
         await expect(vaultManager.getVaultBalanceByVaultId(fakeVaultId))
             .to.be.revertedWith("VaultManager: Vault not found");
-        await expect(vaultManager.getVaultBalanceByToken(token.address))
+        await expect(vaultManager.getCurrentVaultBalanceByToken(token.address))
+            .to.be.revertedWith("VaultManager: No vaults for this token");
+    })
+
+    it("should fail to return tokenAddress for vaultId which does not", async () => {
+        await expect(vaultManager.vaultIdToTokenAddress(fakeVaultId))
             .to.be.revertedWith("VaultManager: Vault not found");
     })
 

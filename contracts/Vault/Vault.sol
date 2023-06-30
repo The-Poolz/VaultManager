@@ -23,7 +23,7 @@ contract Vault is IVault, ERC20Helper{
     }
 
     function withdraw(address to, uint _amount) external override onlyManager {
-        require(tokenBalance() >= _amount, "Not enough balance");
+        require(tokenBalance() >= _amount, "Vault: Not enough balance");
         TransferToken(tokenAddress, to, _amount);
     }
 }

@@ -5,14 +5,16 @@ import "./IVaultManager.sol";
 import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
 import "poolz-helper-v2/contracts/GovManager.sol";
+import "poolz-helper-v2/contracts/Array.sol";
 
 contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     mapping(uint => address) public vaultIdToVault;
-    mapping(address => uint) public tokenToVaultId;
-    uint public totalVaults;
+    mapping(address => uint[]) public tokenToVaultIds;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
+    address[] public allTokens; // just an array of all tokens
     address public permittedAddress;
+    uint public totalVaults;
 
     modifier vaultExists(uint _vaultId){
         require(vaultIdToVault[_vaultId] != address(0), "VaultManager: Vault not found");
@@ -51,7 +53,8 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
-        tokenToVaultId[_tokenAddress] = vaultId;
+        tokenToVaultIds[_tokenAddress].push(vaultId);
+        Array.addIfNotExsist(allTokens, _tokenAddress);
         isDepositActiveForVaultId[vaultId] = true;
         isWithdrawalActiveForVaultId[vaultId] = true;
         emit NewVaultCreated(vaultId, _tokenAddress);
@@ -61,13 +64,12 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         external
         override
         isPermitted
-        vaultExists(tokenToVaultId[_tokenAddress])
-        isDepositActive(tokenToVaultId[_tokenAddress])
+        isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns(uint vaultId)
     {
-        vaultId = tokenToVaultId[_tokenAddress];
+        vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
-        require(_tokenAddress == Vault(vaultAddress).tokenAddress(), "VaultManager: token not approved");
+        assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
         IERC20(_tokenAddress).transferFrom(from, vaultAddress, _amount);
         emit Deposited(vaultId, _tokenAddress, from, _amount);
     }
@@ -85,19 +87,50 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     }
 
     function getVaultBalanceByVaultId(uint _vaultId)
-        external
+        public
         view
         vaultExists(_vaultId)
     returns(uint){
         return Vault(vaultIdToVault[_vaultId]).tokenBalance();
     }
 
-    function getVaultBalanceByToken(address _tokenAddress)
+    function getCurrentVaultBalanceByToken(address _tokenAddress)
         external
         view
-        vaultExists(tokenToVaultId[_tokenAddress])
     returns(uint){
-        return Vault(vaultIdToVault[tokenToVaultId[_tokenAddress]]).tokenBalance();
+        return Vault(vaultIdToVault[getCurrentVaultIdByToken(_tokenAddress)]).tokenBalance();
+    }
+
+    function getAllVaultBalanceByToken(address _tokenAddress)
+        external
+        view
+        returns(uint balance)
+    {
+        uint[] memory vaultIds = tokenToVaultIds[_tokenAddress];
+        for(uint i=0; i < vaultIds.length; i++){
+            balance += Vault(vaultIdToVault[vaultIds[i]]).tokenBalance();
+        }
+    }
+
+    function getTotalVaultsByToken(address _tokenAddress) public view returns(uint _totalVaults) {
+        _totalVaults = tokenToVaultIds[_tokenAddress].length;
+    }
+
+    function getCurrentVaultIdByToken(address _tokenAddress)
+        public
+        view
+        returns(uint vaultId)
+    {
+        require(getTotalVaultsByToken(_tokenAddress) > 0, "VaultManager: No vaults for this token");
+        vaultId = tokenToVaultIds[_tokenAddress][getTotalVaultsByToken(_tokenAddress) - 1];
+    }
+
+    function getAllTokens() external view returns(address[] memory){
+        return allTokens;
+    }
+
+    function getTotalNumberOfTokens() external view returns(uint){
+        return allTokens.length;
     }
 
     function vaultIdToTokenAddress(
