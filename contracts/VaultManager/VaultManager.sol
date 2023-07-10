@@ -52,7 +52,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
 
     function createNewVault(address _tokenAddress) external onlyOwnerOrGov returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
-        vaultId = ++totalVaults;
+        vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
         tokenToVaultIds[_tokenAddress].push(vaultId);
         Array.addIfNotExsist(allTokens, _tokenAddress);
