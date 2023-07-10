@@ -22,27 +22,27 @@ describe('VaultManager', function () {
     vaultManager = await VaultManager.deploy();
     await vaultManager.deployed();
 
-    await vaultManager.setPermitted(owner.getAddress());
+    await vaultManager.setTrustee(owner.getAddress());
   });
 
   it('should set address as permitted', async function () {
     const signers = await ethers.getSigners();
-    const permittedAddress = signers[1].address; 
+    const trustee = signers[1].address; 
 
-    await vaultManager.setPermitted(permittedAddress);
+    await vaultManager.setTrustee(trustee);
 
-    const isPermitted = await vaultManager.permittedAddress();
-    expect(isPermitted).to.equal(permittedAddress);
+    const isPermitted = await vaultManager.trustee();
+    expect(isPermitted).to.equal(trustee);
   });
 
   it('should unset address as permitted', async function () {
     const signers = await ethers.getSigners();
-    const permittedAddress = signers[1].address; 
+    const trustee = signers[1].address; 
 
-    await vaultManager.setPermitted(permittedAddress);
+    await vaultManager.setTrustee(trustee);
 
-    const isPermitted = await vaultManager.permittedAddress();
-    expect(isPermitted).to.equal(permittedAddress);
+    const isPermitted = await vaultManager.trustee();
+    expect(isPermitted).to.equal(trustee);
   });
 
   it('should create a new vault', async function () {
@@ -116,7 +116,7 @@ describe('VaultManager', function () {
     const ownerBalance = await token.balanceOf(await owner.getAddress());
     await token.transfer(permitted.getAddress(), ownerBalance);
     await token.connect(permitted).approve(vaultManager.address, ethers.constants.MaxUint256);
-    await vaultManager.setPermitted(permitted.getAddress());
+    await vaultManager.setTrustee(permitted.getAddress());
     const amounts: BigNumber[] = [];
 
     for(let i = 0; i < 10; i++) {

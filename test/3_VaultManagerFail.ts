@@ -29,9 +29,9 @@ describe('Vault Manager Fail', function () {
             .to.be.revertedWith("Authorization Error");
     }})
 
-    it("should fail to setPermitted if called by non-governor", async () => {
+    it("should fail to setTrustee if called by non-governor", async () => {
         const permittedAddress = await nonGovernor.getAddress();
-        await expect(vaultManager.connect(nonGovernor).setPermitted(permittedAddress))
+        await expect(vaultManager.connect(nonGovernor).setTrustee(permittedAddress))
             .to.be.revertedWith("Authorization Error");
     })
 
@@ -64,7 +64,7 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress());
+        await vaultManager.setTrustee(governor.getAddress());
     });
 
     it("should fail to set deposit active status", async () => {
@@ -125,7 +125,7 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress());
+        await vaultManager.setTrustee(governor.getAddress());
         vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
         await vaultManager.createNewVault(token.address);
     });
@@ -159,7 +159,7 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress());
+        await vaultManager.setTrustee(governor.getAddress());
         vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
         await vaultManager.createNewVault(token.address);
         await vaultManager.setActiveStatusForVaultId(vaultId, false, false);
