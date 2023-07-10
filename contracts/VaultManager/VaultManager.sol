@@ -13,7 +13,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
     address[] public allTokens; // just an array of all tokens
-    address public permittedAddress;
+    address public trustee;
     uint public totalVaults;
 
     modifier vaultExists(uint _vaultId){
@@ -21,8 +21,8 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    modifier isPermitted(){
-        require(permittedAddress == msg.sender, "VaultManager: Not permitted");
+    modifier isTrustee(){
+        require(trustee == msg.sender, "VaultManager: Not Trustee");
         _;
     }
 
@@ -36,8 +36,9 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    function setPermitted(address _address) external onlyOwnerOrGov{
-        permittedAddress = _address;
+    function setTrustee(address _address) external onlyOwnerOrGov{
+        require(_address.code.length > 0, "VaultManager: EOA not allowed");
+        trustee = _address;
     }
 
     function setActiveStatusForVaultId(uint _vaultId, bool _depositStatus, bool _withdrawStatus)
@@ -51,7 +52,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
 
     function createNewVault(address _tokenAddress) external onlyOwnerOrGov returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
-        vaultId = totalVaults++;
+        vaultId = ++totalVaults;
         vaultIdToVault[vaultId] = address(newVault);
         tokenToVaultIds[_tokenAddress].push(vaultId);
         Array.addIfNotExsist(allTokens, _tokenAddress);
@@ -60,30 +61,38 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
 
-    function depositByToken(address _tokenAddress, address from, uint _amount)
+    /**
+     * @dev Will be used by the Trustee to deposit tokens to the vault.
+     * @param _from Trustee is responsible to provide the correct _from address.
+     */
+    function depositByToken(address _tokenAddress, address _from, uint _amount)
         external
         override
-        isPermitted
+        isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns(uint vaultId)
     {
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
         assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
-        IERC20(_tokenAddress).transferFrom(from, vaultAddress, _amount);
-        emit Deposited(vaultId, _tokenAddress, from, _amount);
+        IERC20(_tokenAddress).transferFrom(_from, vaultAddress, _amount);
+        emit Deposited(vaultId, _tokenAddress, _from, _amount);
     }
 
-    function withdrawByVaultId(uint _vaultId, address to, uint _amount)
+    /**
+     * @dev Will be used by the Trustee to deposit tokens to the vault.
+     * @param _to Trustee is responsible to provide the correct _to address.
+     */
+    function withdrawByVaultId(uint _vaultId, address _to, uint _amount)
         external
         override
-        isPermitted
+        isTrustee
         vaultExists(_vaultId)
         isWithdrawalActive(_vaultId)
     {
         Vault vault = Vault(vaultIdToVault[_vaultId]);
-        vault.withdraw(to, _amount);
-        emit Withdrawn(_vaultId, vault.tokenAddress(), to, _amount);
+        vault.withdraw(_to, _amount);
+        emit Withdrawn(_vaultId, vault.tokenAddress(), _to, _amount);
     }
 
     function getVaultBalanceByVaultId(uint _vaultId)
