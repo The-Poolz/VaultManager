@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Signer } from 'ethers';
 import { ethers } from 'hardhat';
+import { MockTrustee } from '../typechain-types';
 import { VaultManager } from '../typechain-types/contracts/VaultManager';
 import { ERC20Token } from '../typechain-types/poolz-helper-v2/contracts/token';
 
@@ -10,6 +11,7 @@ describe('Vault Manager Fail', function () {
     let vaultManager: VaultManager;
     let token: ERC20Token;
     let nonGovernor: Signer;
+    let trustee: MockTrustee;
 
     beforeEach(async function () {
         const Token = await ethers.getContractFactory('ERC20Token');
@@ -22,17 +24,58 @@ describe('Vault Manager Fail', function () {
         const VaultManager = await ethers.getContractFactory('VaultManager');
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
+
+        const Trustee = await ethers.getContractFactory('MockTrustee');
+        trustee = await Trustee.deploy(vaultManager.address);
+        await trustee.deployed();
     });
 
     it("should fail to create new vault if called by non-governor", async () => {{
         await expect(vaultManager.connect(nonGovernor).createNewVault(token.address))
-            .to.be.revertedWith("Authorization Error");
+            .to.be.revertedWith("Ownable: caller is not the owner");
     }})
 
-    it("should fail to setPermitted if called by non-governor", async () => {
+    it("should fail to setTrustee if called by non-governor", async () => {
         const permittedAddress = await nonGovernor.getAddress();
-        await expect(vaultManager.connect(nonGovernor).setPermitted(permittedAddress))
-            .to.be.revertedWith("Authorization Error");
+        await expect(vaultManager.connect(nonGovernor).setTrustee(permittedAddress))
+            .to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("should fail to setTrustee if called by non-governor", async () => {
+        const permittedAddress = await nonGovernor.getAddress();
+        await expect(vaultManager.connect(nonGovernor).updateTrustee(permittedAddress))
+            .to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("should fail to set EOA as trustee", async () => {
+        await expect(vaultManager.setTrustee(nonGovernor.getAddress()))
+            .to.be.revertedWith("VaultManager: EOA not allowed");
+    })
+
+    it("should fail to update trustee to EOA", async () => {
+        await expect(vaultManager.updateTrustee(nonGovernor.getAddress()))
+            .to.be.revertedWith("VaultManager: EOA not allowed")
+    })
+
+    it("should fail to set Zero address as trustee", async () => {
+        await expect(vaultManager.setTrustee(ethers.constants.AddressZero))
+            .to.be.revertedWith("VaultManager: Zero address not allowed");
+    })
+
+    it("should fail to update trustee to Zero address", async () => {
+        await expect(vaultManager.updateTrustee(ethers.constants.AddressZero))
+            .to.be.revertedWith("VaultManager: Zero address not allowed")
+    })
+
+    it("should fail to update trustee initially", async () => {
+        await expect(vaultManager.updateTrustee(trustee.address))
+            .to.be.revertedWith("VaultManager: Trustee not set yet")
+    })
+
+    it("should fail to set trustee after it is already set", async () => {
+        await vaultManager.setTrustee(trustee.address);
+        await expect(vaultManager.setTrustee(trustee.address))
+            .to.be.revertedWith("VaultManager: Trustee already set")
     })
 
     it("should fail to set active status if called by non owner", async () => {
@@ -40,13 +83,14 @@ describe('Vault Manager Fail', function () {
         await vaultManager.createNewVault(token.address);
 
         await expect(vaultManager.connect(nonGovernor).setActiveStatusForVaultId(vaultId, true, true))
-            .to.be.revertedWith("Authorization Error");
+            .to.be.revertedWith("Ownable: caller is not the owner");
     })
 
   });
 
   describe("Vault does not Exists", function() {
     let vaultManager: VaultManager;
+    let trustee: MockTrustee;
     let token: ERC20Token;
     let governor: Signer;
     const fakeVaultId = "9";
@@ -64,7 +108,11 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress());
+        const Trustee = await ethers.getContractFactory('MockTrustee');
+        trustee = await Trustee.deploy(vaultManager.address);
+        await trustee.deployed();
+
+        await vaultManager.setTrustee(trustee.address);
     });
 
     it("should fail to set deposit active status", async () => {
@@ -73,12 +121,12 @@ describe('Vault Manager Fail', function () {
     })
 
     it("should fail to deposit", async () => {
-        await expect(vaultManager.depositByToken(token.address, governor.getAddress(), 100))
+        await expect(trustee.deposit(token.address, governor.getAddress(), 100))
             .to.be.revertedWith("VaultManager: No vaults for this token");
     })
 
     it("should fail to withdraw", async () => {
-        await expect(vaultManager.withdrawByVaultId(fakeVaultId, governor.getAddress(), 100))
+        await expect(trustee.withdraw(fakeVaultId, governor.getAddress(), 100))
             .to.be.revertedWith("VaultManager: Vault not found");
     })
 
@@ -105,10 +153,10 @@ describe('Vault Manager Fail', function () {
     })
   })
 
-  describe("Permitted Functions", function () {
+  describe("Trustee Functions", function () {
     let vaultManager: VaultManager;
+    let trustee: MockTrustee;
     let token: ERC20Token;
-    let governor: Signer;
     let nonPermitted: Signer;
     let vaultId: string
 
@@ -118,31 +166,41 @@ describe('Vault Manager Fail', function () {
         await token.deployed();
         
         const signers = await ethers.getSigners();
-        governor = signers[0];
         nonPermitted = signers[1];
 
         const VaultManager = await ethers.getContractFactory('VaultManager');
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress());
+        const Trustee = await ethers.getContractFactory('MockTrustee');
+        trustee = await Trustee.deploy(vaultManager.address);
+        await trustee.deployed();
+
+        await vaultManager.setTrustee(trustee.address);
         vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
         await vaultManager.createNewVault(token.address);
     });
 
-    it("should fail to deposit", async () => {
+    it("should fail to deposit when called by non trustee", async () => {
       await expect(vaultManager.connect(nonPermitted).depositByToken(token.address, nonPermitted.getAddress(), 100))
-          .to.be.revertedWith("VaultManager: Not permitted");
+          .to.be.revertedWith("VaultManager: Not Trustee");
     });
-    it("should fail to withdraw", async () => {
+
+    it("should fail to deposite when origin not equal to _from", async () => {
+      await expect(trustee.deposit(token.address, nonPermitted.getAddress(), 100))
+        .to.be.revertedWith("VaultManager: Only origin can deposit");
+    })
+
+    it("should fail to withdraw when called by non trustee", async () => {
       await expect(vaultManager.connect(nonPermitted).withdrawByVaultId(vaultId, nonPermitted.getAddress(), 100))
-          .to.be.revertedWith("VaultManager: Not permitted");
+          .to.be.revertedWith("VaultManager: Not Trustee");
     });
 
   });
 
   describe("Deposite and Withdrawal Status", function() {
     let vaultManager: VaultManager;
+    let trustee: MockTrustee;
     let token: ERC20Token;
     let governor: Signer;
     let vaultId: string
@@ -159,19 +217,23 @@ describe('Vault Manager Fail', function () {
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
 
-        await vaultManager.setPermitted(governor.getAddress());
+        const Trustee = await ethers.getContractFactory('MockTrustee');
+        trustee = await Trustee.deploy(vaultManager.address);
+        await trustee.deployed();
+
+        await vaultManager.setTrustee(trustee.address);
         vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
         await vaultManager.createNewVault(token.address);
         await vaultManager.setActiveStatusForVaultId(vaultId, false, false);
     });
 
     it("should fail to deposit", async () => {
-      await expect(vaultManager.depositByToken(token.address, governor.getAddress(), 100))
+      await expect(trustee.deposit(token.address, governor.getAddress(), 100))
          .to.be.revertedWith("VaultManager: Deposits are frozen");
     });
 
     it("should fail to withdraw", async () => {
-      await expect(vaultManager.withdrawByVaultId(vaultId, governor.getAddress(), 100))
+      await expect(trustee.withdraw(vaultId, governor.getAddress(), 100))
          .to.be.revertedWith("VaultManager: Withdrawals are frozen");
     });
 

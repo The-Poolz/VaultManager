@@ -4,16 +4,16 @@ pragma solidity ^0.8.0;
 import "./IVaultManager.sol";
 import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
-import "poolz-helper-v2/contracts/GovManager.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "poolz-helper-v2/contracts/Array.sol";
 
-contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
+contract VaultManager is IVaultManager, VaultManagerEvents, Ownable{
     mapping(uint => address) public vaultIdToVault;
     mapping(address => uint[]) public tokenToVaultIds;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
     address[] public allTokens; // just an array of all tokens
-    address public permittedAddress;
+    address public trustee;
     uint public totalVaults;
 
     modifier vaultExists(uint _vaultId){
@@ -21,8 +21,8 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    modifier isPermitted(){
-        require(permittedAddress == msg.sender, "VaultManager: Not permitted");
+    modifier isTrustee(){
+        require(trustee == msg.sender, "VaultManager: Not Trustee");
         _;
     }
 
@@ -36,20 +36,50 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    function setPermitted(address _address) external onlyOwnerOrGov{
-        permittedAddress = _address;
+    modifier notZeroAddress(address _address){
+        require(_address != address(0), "VaultManager: Zero address not allowed");
+        _;
+    }
+
+    modifier notEOA(address _address){
+        require(_address.code.length > 0, "VaultManager: EOA not allowed");
+        _;
+    }
+
+    /**
+     * @dev will be used only once to set the trustee address initially.
+     */
+    function setTrustee(address _address) external
+        onlyOwner
+        notZeroAddress(_address)
+        notEOA(_address)
+    {
+        require(trustee == address(0), "VaultManager: Trustee already set");
+        trustee = _address;
+    }
+
+    /**
+     * @dev will be used to update the trustee address. This function will need extra approvals to be called.
+     */
+    function updateTrustee(address _address) external
+        onlyOwner
+        notZeroAddress(_address)
+        notEOA(_address)
+    {
+        require(trustee != address(0), "VaultManager: Trustee not set yet");
+        trustee = _address;
     }
 
     function setActiveStatusForVaultId(uint _vaultId, bool _depositStatus, bool _withdrawStatus)
         external
-        onlyOwnerOrGov
+        onlyOwner
         vaultExists(_vaultId)
     {
         isDepositActiveForVaultId[_vaultId] = _depositStatus;
         isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
     }
 
-    function createNewVault(address _tokenAddress) external onlyOwnerOrGov returns(uint vaultId){
+    function createNewVault(address _tokenAddress) external onlyOwner returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
@@ -60,30 +90,39 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
 
-    function depositByToken(address _tokenAddress, address from, uint _amount)
+    /**
+     * @dev Will be used by the Trustee to deposit tokens to the vault.
+     * @param _from Trustee is responsible to provide the correct _from address.
+     */
+    function depositByToken(address _tokenAddress, address _from, uint _amount)
         external
         override
-        isPermitted
+        isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns(uint vaultId)
-    {
+    {   
+        require(tx.origin == _from, "VaultManager: Only origin can deposit");
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
         assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
-        IERC20(_tokenAddress).transferFrom(from, vaultAddress, _amount);
-        emit Deposited(vaultId, _tokenAddress, from, _amount);
+        IERC20(_tokenAddress).transferFrom(_from, vaultAddress, _amount);
+        emit Deposited(vaultId, _tokenAddress, _from, _amount);
     }
 
-    function withdrawByVaultId(uint _vaultId, address to, uint _amount)
+    /**
+     * @dev Will be used by the Trustee to deposit tokens to the vault.
+     * @param _to Trustee is responsible to provide the correct _to address.
+     */
+    function withdrawByVaultId(uint _vaultId, address _to, uint _amount)
         external
         override
-        isPermitted
+        isTrustee
         vaultExists(_vaultId)
         isWithdrawalActive(_vaultId)
     {
         Vault vault = Vault(vaultIdToVault[_vaultId]);
-        vault.withdraw(to, _amount);
-        emit Withdrawn(_vaultId, vault.tokenAddress(), to, _amount);
+        vault.withdraw(_to, _amount);
+        emit Withdrawn(_vaultId, vault.tokenAddress(), _to, _amount);
     }
 
     function getVaultBalanceByVaultId(uint _vaultId)

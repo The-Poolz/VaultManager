@@ -2,11 +2,13 @@ import { expect } from 'chai';
 import { BigNumber, Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import { VaultManager } from '../typechain-types/contracts/VaultManager';
+import { MockTrustee } from '../typechain-types/contracts/test';
 import { ERC20Token } from '../typechain-types/poolz-helper-v2/contracts/token';
 
 describe('VaultManager', function () {
   let vaultManager: VaultManager;
   let token: ERC20Token;
+  let trustee: MockTrustee
   let owner: Signer;
   let allSigners: Signer[];
 
@@ -22,28 +24,35 @@ describe('VaultManager', function () {
     vaultManager = await VaultManager.deploy();
     await vaultManager.deployed();
 
-    await vaultManager.setPermitted(owner.getAddress());
+    const Trustee = await ethers.getContractFactory('MockTrustee');
+    trustee = await Trustee.deploy(vaultManager.address);
+    await trustee.deployed();
+
   });
 
-  it('should set address as permitted', async function () {
-    const signers = await ethers.getSigners();
-    const permittedAddress = signers[1].address; 
+  it('should set address as trustee', async function () {
+    const Trustee = await ethers.getContractFactory('MockTrustee');
+    const trustee = await Trustee.deploy(vaultManager.address);
+    await trustee.deployed();
 
-    await vaultManager.setPermitted(permittedAddress);
+    await vaultManager.setTrustee(trustee.address);
 
-    const isPermitted = await vaultManager.permittedAddress();
-    expect(isPermitted).to.equal(permittedAddress);
+    const result = await vaultManager.trustee();
+    expect(result).to.equal(trustee.address);
   });
 
-  it('should unset address as permitted', async function () {
-    const signers = await ethers.getSigners();
-    const permittedAddress = signers[1].address; 
+  it("should update the trustee", async () => {
+    await vaultManager.setTrustee(trustee.address);
+    const newTrustee = await ethers.getContractFactory('MockTrustee');
+    const newTrusteeInstance = await newTrustee.deploy(vaultManager.address);
+    await newTrusteeInstance.deployed();
 
-    await vaultManager.setPermitted(permittedAddress);
+    await vaultManager.updateTrustee(newTrusteeInstance.address);
 
-    const isPermitted = await vaultManager.permittedAddress();
-    expect(isPermitted).to.equal(permittedAddress);
-  });
+    const result = await vaultManager.trustee();
+    expect(result).to.equal(newTrusteeInstance.address);
+    expect(result).to.not.equal(trustee.address);
+  })
 
   it('should create a new vault', async function () {
     const vaultId = await vaultManager.callStatic.createNewVault(token.address);
@@ -72,15 +81,14 @@ describe('VaultManager', function () {
   });
 
   it('should deposit tokens to a vault', async function () {
+    await vaultManager.setTrustee(trustee.address);
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
     const vaultId = await vaultManager.callStatic.createNewVault(token.address);
     await vaultManager.createNewVault(token.address);
 
-    const from = await owner.getAddress();
-
-    await vaultManager.depositByToken(token.address, from, amount);
+    await trustee.deposit(token.address, owner.getAddress(), amount);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
@@ -89,18 +97,18 @@ describe('VaultManager', function () {
   });
 
   it('should withdraw tokens from a vault', async function () {
+    await vaultManager.setTrustee(trustee.address);
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
     await vaultManager.createNewVault(token.address);
 
-    const from = await owner.getAddress();
     const signers = await ethers.getSigners()
     const to = signers[1].address;
     const vaultId = 0; 
-    await vaultManager.depositByToken(token.address, from, amount);
+    await trustee.deposit(token.address, owner.getAddress(), amount);
 
-    await vaultManager.withdrawByVaultId(vaultId, to, amount);
+    await trustee.withdraw(vaultId, to, amount)
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
@@ -112,11 +120,12 @@ describe('VaultManager', function () {
   });
 
   it('should support multiple vaults per token', async () => {
+    await vaultManager.setTrustee(trustee.address);
     const permitted = allSigners[1];
     const ownerBalance = await token.balanceOf(await owner.getAddress());
     await token.transfer(permitted.getAddress(), ownerBalance);
     await token.connect(permitted).approve(vaultManager.address, ethers.constants.MaxUint256);
-    await vaultManager.setPermitted(permitted.getAddress());
+
     const amounts: BigNumber[] = [];
 
     for(let i = 0; i < 10; i++) {
@@ -124,8 +133,9 @@ describe('VaultManager', function () {
 
       const amount = (Math.floor(Math.random() * 100000) + 1000);
       amounts.push(ethers.BigNumber.from(amount));
-      const vaultId = await vaultManager.connect(permitted).callStatic.depositByToken(token.address, await permitted.getAddress(), amount);
-      await vaultManager.connect(permitted).depositByToken(token.address, await permitted.getAddress(), amount);
+
+      const vaultId = await trustee.connect(permitted).callStatic.deposit(token.address, permitted.getAddress(), amount);
+      await trustee.connect(permitted).deposit(token.address, permitted.getAddress(), amount);
       const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
       const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
       const totalBalance = await vaultManager.getAllVaultBalanceByToken(token.address);
