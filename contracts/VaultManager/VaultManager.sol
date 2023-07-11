@@ -36,8 +36,37 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         _;
     }
 
-    function setTrustee(address _address) external onlyOwnerOrGov{
+    modifier notZeroAddress(address _address){
+        require(_address != address(0), "VaultManager: Zero address not allowed");
+        _;
+    }
+
+    modifier notEOA(address _address){
         require(_address.code.length > 0, "VaultManager: EOA not allowed");
+        _;
+    }
+
+    /**
+     * @dev will be used only once to set the trustee address initially.
+     */
+    function setTrustee(address _address) external
+        onlyOwnerOrGov
+        notZeroAddress(_address)
+        notEOA(_address)
+    {
+        require(trustee == address(0), "VaultManager: Trustee already set");
+        trustee = _address;
+    }
+
+    /**
+     * @dev will be used to update the trustee address. This function will need extra approvals to be called.
+     */
+    function updateTrustee(address _address) external
+        onlyOwnerOrGov
+        notZeroAddress(_address)
+        notEOA(_address)
+    {
+        require(trustee != address(0), "VaultManager: Trustee not set yet");
         trustee = _address;
     }
 

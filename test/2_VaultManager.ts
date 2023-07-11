@@ -28,7 +28,6 @@ describe('VaultManager', function () {
     trustee = await Trustee.deploy(vaultManager.address);
     await trustee.deployed();
 
-    await vaultManager.setTrustee(trustee.address);
   });
 
   it('should set address as trustee', async function () {
@@ -41,6 +40,19 @@ describe('VaultManager', function () {
     const result = await vaultManager.trustee();
     expect(result).to.equal(trustee.address);
   });
+
+  it("should update the trustee", async () => {
+    await vaultManager.setTrustee(trustee.address);
+    const newTrustee = await ethers.getContractFactory('MockTrustee');
+    const newTrusteeInstance = await newTrustee.deploy(vaultManager.address);
+    await newTrusteeInstance.deployed();
+
+    await vaultManager.updateTrustee(newTrusteeInstance.address);
+
+    const result = await vaultManager.trustee();
+    expect(result).to.equal(newTrusteeInstance.address);
+    expect(result).to.not.equal(trustee.address);
+  })
 
   it('should create a new vault', async function () {
     const vaultId = await vaultManager.callStatic.createNewVault(token.address);
@@ -69,6 +81,7 @@ describe('VaultManager', function () {
   });
 
   it('should deposit tokens to a vault', async function () {
+    await vaultManager.setTrustee(trustee.address);
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
@@ -84,6 +97,7 @@ describe('VaultManager', function () {
   });
 
   it('should withdraw tokens from a vault', async function () {
+    await vaultManager.setTrustee(trustee.address);
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
@@ -106,6 +120,7 @@ describe('VaultManager', function () {
   });
 
   it('should support multiple vaults per token', async () => {
+    await vaultManager.setTrustee(trustee.address);
     const permitted = allSigners[1];
     const ownerBalance = await token.balanceOf(await owner.getAddress());
     await token.transfer(permitted.getAddress(), ownerBalance);

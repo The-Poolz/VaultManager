@@ -11,6 +11,7 @@ describe('Vault Manager Fail', function () {
     let vaultManager: VaultManager;
     let token: ERC20Token;
     let nonGovernor: Signer;
+    let trustee: MockTrustee;
 
     beforeEach(async function () {
         const Token = await ethers.getContractFactory('ERC20Token');
@@ -23,6 +24,10 @@ describe('Vault Manager Fail', function () {
         const VaultManager = await ethers.getContractFactory('VaultManager');
         vaultManager = await VaultManager.deploy();
         await vaultManager.deployed();
+
+        const Trustee = await ethers.getContractFactory('MockTrustee');
+        trustee = await Trustee.deploy(vaultManager.address);
+        await trustee.deployed();
     });
 
     it("should fail to create new vault if called by non-governor", async () => {{
@@ -34,6 +39,43 @@ describe('Vault Manager Fail', function () {
         const permittedAddress = await nonGovernor.getAddress();
         await expect(vaultManager.connect(nonGovernor).setTrustee(permittedAddress))
             .to.be.revertedWith("Authorization Error");
+    })
+
+    it("should fail to setTrustee if called by non-governor", async () => {
+        const permittedAddress = await nonGovernor.getAddress();
+        await expect(vaultManager.connect(nonGovernor).updateTrustee(permittedAddress))
+            .to.be.revertedWith("Authorization Error");
+    })
+
+    it("should fail to set EOA as trustee", async () => {
+        await expect(vaultManager.setTrustee(nonGovernor.getAddress()))
+            .to.be.revertedWith("VaultManager: EOA not allowed");
+    })
+
+    it("should fail to update trustee to EOA", async () => {
+        await expect(vaultManager.updateTrustee(nonGovernor.getAddress()))
+            .to.be.revertedWith("VaultManager: EOA not allowed")
+    })
+
+    it("should fail to set Zero address as trustee", async () => {
+        await expect(vaultManager.setTrustee(ethers.constants.AddressZero))
+            .to.be.revertedWith("VaultManager: Zero address not allowed");
+    })
+
+    it("should fail to update trustee to Zero address", async () => {
+        await expect(vaultManager.updateTrustee(ethers.constants.AddressZero))
+            .to.be.revertedWith("VaultManager: Zero address not allowed")
+    })
+
+    it("should fail to update trustee initially", async () => {
+        await expect(vaultManager.updateTrustee(trustee.address))
+            .to.be.revertedWith("VaultManager: Trustee not set yet")
+    })
+
+    it("should fail to set trustee after it is already set", async () => {
+        await vaultManager.setTrustee(trustee.address);
+        await expect(vaultManager.setTrustee(trustee.address))
+            .to.be.revertedWith("VaultManager: Trustee already set")
     })
 
     it("should fail to set active status if called by non owner", async () => {
@@ -138,11 +180,6 @@ describe('Vault Manager Fail', function () {
         vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
         await vaultManager.createNewVault(token.address);
     });
-
-    it("should fail to set EOA as trustee", async () => {
-        await expect(vaultManager.setTrustee(nonPermitted.getAddress()))
-            .to.be.revertedWith("VaultManager: EOA not allowed");
-    })
 
     it("should fail to deposit when called by non trustee", async () => {
       await expect(vaultManager.connect(nonPermitted).depositByToken(token.address, nonPermitted.getAddress(), 100))
