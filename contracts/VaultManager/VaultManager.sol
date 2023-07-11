@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 import "./IVaultManager.sol";
 import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
-import "poolz-helper-v2/contracts/GovManager.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "poolz-helper-v2/contracts/Array.sol";
 
-contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
+contract VaultManager is IVaultManager, VaultManagerEvents, Ownable{
     mapping(uint => address) public vaultIdToVault;
     mapping(address => uint[]) public tokenToVaultIds;
     mapping(uint => bool) public isDepositActiveForVaultId;
@@ -50,7 +50,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
      * @dev will be used only once to set the trustee address initially.
      */
     function setTrustee(address _address) external
-        onlyOwnerOrGov
+        onlyOwner
         notZeroAddress(_address)
         notEOA(_address)
     {
@@ -62,7 +62,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
      * @dev will be used to update the trustee address. This function will need extra approvals to be called.
      */
     function updateTrustee(address _address) external
-        onlyOwnerOrGov
+        onlyOwner
         notZeroAddress(_address)
         notEOA(_address)
     {
@@ -72,14 +72,14 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
 
     function setActiveStatusForVaultId(uint _vaultId, bool _depositStatus, bool _withdrawStatus)
         external
-        onlyOwnerOrGov
+        onlyOwner
         vaultExists(_vaultId)
     {
         isDepositActiveForVaultId[_vaultId] = _depositStatus;
         isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
     }
 
-    function createNewVault(address _tokenAddress) external onlyOwnerOrGov returns(uint vaultId){
+    function createNewVault(address _tokenAddress) external onlyOwner returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);

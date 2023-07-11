@@ -32,19 +32,19 @@ describe('Vault Manager Fail', function () {
 
     it("should fail to create new vault if called by non-governor", async () => {{
         await expect(vaultManager.connect(nonGovernor).createNewVault(token.address))
-            .to.be.revertedWith("Authorization Error");
+            .to.be.revertedWith("Ownable: caller is not the owner");
     }})
 
     it("should fail to setTrustee if called by non-governor", async () => {
         const permittedAddress = await nonGovernor.getAddress();
         await expect(vaultManager.connect(nonGovernor).setTrustee(permittedAddress))
-            .to.be.revertedWith("Authorization Error");
+            .to.be.revertedWith("Ownable: caller is not the owner");
     })
 
     it("should fail to setTrustee if called by non-governor", async () => {
         const permittedAddress = await nonGovernor.getAddress();
         await expect(vaultManager.connect(nonGovernor).updateTrustee(permittedAddress))
-            .to.be.revertedWith("Authorization Error");
+            .to.be.revertedWith("Ownable: caller is not the owner");
     })
 
     it("should fail to set EOA as trustee", async () => {
@@ -83,7 +83,7 @@ describe('Vault Manager Fail', function () {
         await vaultManager.createNewVault(token.address);
 
         await expect(vaultManager.connect(nonGovernor).setActiveStatusForVaultId(vaultId, true, true))
-            .to.be.revertedWith("Authorization Error");
+            .to.be.revertedWith("Ownable: caller is not the owner");
     })
 
   });
