@@ -71,7 +71,8 @@ contract VaultManager is IVaultManager, VaultManagerEvents, GovManager{
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns(uint vaultId)
-    {
+    {   
+        require(tx.origin == _from, "VaultManager: Only origin can deposit");
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
         assert(_tokenAddress == Vault(vaultAddress).tokenAddress());

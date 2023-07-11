@@ -144,11 +144,17 @@ describe('Vault Manager Fail', function () {
             .to.be.revertedWith("VaultManager: EOA not allowed");
     })
 
-    it("should fail to deposit", async () => {
+    it("should fail to deposit when called by non trustee", async () => {
       await expect(vaultManager.connect(nonPermitted).depositByToken(token.address, nonPermitted.getAddress(), 100))
           .to.be.revertedWith("VaultManager: Not Trustee");
     });
-    it("should fail to withdraw", async () => {
+
+    it("should fail to deposite when origin not equal to _from", async () => {
+      await expect(trustee.deposit(token.address, nonPermitted.getAddress(), 100))
+        .to.be.revertedWith("VaultManager: Only origin can deposit");
+    })
+
+    it("should fail to withdraw when called by non trustee", async () => {
       await expect(vaultManager.connect(nonPermitted).withdrawByVaultId(vaultId, nonPermitted.getAddress(), 100))
           .to.be.revertedWith("VaultManager: Not Trustee");
     });
