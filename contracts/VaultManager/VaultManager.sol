@@ -95,13 +95,14 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         address _tokenAddress,
         address _royaltyReceiver,
         uint96 feeNumerator
-    ) external onlyOwner returns(uint vaultId){
+    ) external onlyOwner notZeroAddress(_royaltyReceiver) returns(uint vaultId){
+        require(feeNumerator <= _feeDenominator(), "VaultManager: Royalty cannot be more than 100%");
         vaultId = _createNewVault(_tokenAddress);
         _setTokenRoyalty(vaultId, _royaltyReceiver, feeNumerator);
         emit VaultRoyaltySet(vaultId, _royaltyReceiver, feeNumerator);
     }
 
-    function _createNewVault(address _tokenAddress) private returns(uint vaultId){
+    function _createNewVault(address _tokenAddress) private notZeroAddress(_tokenAddress) returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);

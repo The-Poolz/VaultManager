@@ -11,6 +11,7 @@ describe('Vault Manager Fail', function () {
     let vaultManager: VaultManager;
     let token: ERC20Token;
     let nonGovernor: Signer;
+    let governor: Signer;
     let trustee: MockTrustee;
 
     beforeEach(async function () {
@@ -19,6 +20,7 @@ describe('Vault Manager Fail', function () {
         await token.deployed();
         
         const signers = await ethers.getSigners();
+        governor = signers[0];
         nonGovernor = signers[1];
 
         const VaultManager = await ethers.getContractFactory('VaultManager');
@@ -84,6 +86,11 @@ describe('Vault Manager Fail', function () {
 
         await expect(vaultManager.connect(nonGovernor).setActiveStatusForVaultId(vaultId, true, true))
             .to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("should fail to create new vault with incorrect feeNumerator", async () => {
+        await expect(vaultManager.connect(governor)['createNewVault(address,address,uint96)'](token.address, governor.getAddress(), 10001))
+            .to.be.revertedWith("VaultManager: Royalty cannot be more than 100%");
     })
 
   });

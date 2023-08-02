@@ -67,8 +67,11 @@ describe('VaultManager', function () {
 
     const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
     const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    const [receiverAddress, royaltyAmount] = await vaultManager.royaltyInfo(vaultId,"100");
     expect(isDepositActive).to.equal(true);
     expect(isWithdrawActive).to.equal(true);
+    expect(receiverAddress).to.equal(ethers.constants.AddressZero);
+    expect(royaltyAmount).to.equal(0);
   });
 
   it('should get the token address', async function () {
@@ -151,7 +154,27 @@ describe('VaultManager', function () {
       expect(vaultToken).to.equal(token.address);
       expect(allTokens).to.deep.equal([token.address]);
     }
+  })
 
+  it("should create a vault with royalty", async () => {
+    const feeNumerator = 100; // 1%
+    const vaultId = await vaultManager.callStatic['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
+    await vaultManager['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
+
+    const totalVaults = await vaultManager.totalVaults();
+    expect(totalVaults).to.equal(1);
+    expect(vaultId).to.equal(totalVaults.sub(1).toString());
+
+    const vaultAddress = await vaultManager.vaultIdToVault(vaultId);
+    expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
+
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    const [receiverAddress, royaltyAmount] = await vaultManager.royaltyInfo(vaultId,"100");
+    expect(isDepositActive).to.equal(true);
+    expect(isWithdrawActive).to.equal(true);
+    expect(receiverAddress).to.equal(await owner.getAddress());
+    expect(royaltyAmount).to.equal(1);
   })
 
   
