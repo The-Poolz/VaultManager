@@ -4,14 +4,15 @@ pragma solidity ^0.8.0;
 import "./IVaultManager.sol";
 import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "poolz-helper-v2/contracts/Array.sol";
+import "./VaultRoyalty.sol";
 
-contract VaultManager is IVaultManager, VaultManagerEvents, Ownable{
+contract VaultManager is IVaultManager, VaultManagerEvents, VaultRoyalty {
     mapping(uint => address) public vaultIdToVault;
     mapping(address => uint[]) public tokenToVaultIds;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
+
     address[] public allTokens; // just an array of all tokens
     address public trustee;
     uint public totalVaults;
