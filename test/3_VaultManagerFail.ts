@@ -31,7 +31,7 @@ describe('Vault Manager Fail', function () {
     });
 
     it("should fail to create new vault if called by non-governor", async () => {{
-        await expect(vaultManager.connect(nonGovernor).createNewVault(token.address))
+        await expect(vaultManager.connect(nonGovernor)['createNewVault(address)'](token.address))
             .to.be.revertedWith("Ownable: caller is not the owner");
     }})
 
@@ -79,8 +79,8 @@ describe('Vault Manager Fail', function () {
     })
 
     it("should fail to set active status if called by non owner", async () => {
-        const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-        await vaultManager.createNewVault(token.address);
+        const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+        await vaultManager['createNewVault(address)'](token.address);
 
         await expect(vaultManager.connect(nonGovernor).setActiveStatusForVaultId(vaultId, true, true))
             .to.be.revertedWith("Ownable: caller is not the owner");
@@ -177,8 +177,8 @@ describe('Vault Manager Fail', function () {
         await trustee.deployed();
 
         await vaultManager.setTrustee(trustee.address);
-        vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
-        await vaultManager.createNewVault(token.address);
+        vaultId = (await vaultManager.callStatic['createNewVault(address)'](token.address)).toString();
+        await vaultManager['createNewVault(address)'](token.address);
     });
 
     it("should fail to deposit when called by non trustee", async () => {
@@ -222,8 +222,8 @@ describe('Vault Manager Fail', function () {
         await trustee.deployed();
 
         await vaultManager.setTrustee(trustee.address);
-        vaultId = (await vaultManager.callStatic.createNewVault(token.address)).toString();
-        await vaultManager.createNewVault(token.address);
+        vaultId = (await vaultManager.callStatic['createNewVault(address)'](token.address)).toString();
+        await vaultManager['createNewVault(address)'](token.address);
         await vaultManager.setActiveStatusForVaultId(vaultId, false, false);
     });
 

@@ -55,8 +55,8 @@ describe('VaultManager', function () {
   })
 
   it('should create a new vault', async function () {
-    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-    await vaultManager.createNewVault(token.address);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
@@ -72,8 +72,8 @@ describe('VaultManager', function () {
   });
 
   it('should get the token address', async function () {
-    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-    await vaultManager.createNewVault(token.address);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const tokenAddress = await vaultManager.vaultIdToTokenAddress(vaultId);
 
@@ -85,8 +85,8 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-    await vaultManager.createNewVault(token.address);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     await trustee.deposit(token.address, owner.getAddress(), amount);
 
@@ -101,7 +101,7 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    await vaultManager.createNewVault(token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const signers = await ethers.getSigners()
     const to = signers[1].address;
@@ -129,7 +129,7 @@ describe('VaultManager', function () {
     const amounts: BigNumber[] = [];
 
     for(let i = 0; i < 10; i++) {
-      await vaultManager.connect(owner).createNewVault(token.address);
+      await vaultManager.connect(owner)['createNewVault(address)'](token.address);
 
       const amount = (Math.floor(Math.random() * 100000) + 1000);
       amounts.push(ethers.BigNumber.from(amount));

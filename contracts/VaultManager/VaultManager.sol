@@ -82,14 +82,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     }
 
     function createNewVault(address _tokenAddress) external onlyOwner returns(uint vaultId){
-        Vault newVault = new Vault(_tokenAddress);
-        vaultId = totalVaults++;
-        vaultIdToVault[vaultId] = address(newVault);
-        tokenToVaultIds[_tokenAddress].push(vaultId);
-        Array.addIfNotExsist(allTokens, _tokenAddress);
-        isDepositActiveForVaultId[vaultId] = true;
-        isWithdrawalActiveForVaultId[vaultId] = true;
-        emit NewVaultCreated(vaultId, _tokenAddress);
+        vaultId = _createNewVault(_tokenAddress);
     }
 
     /// @dev used to create vaults with royalty
@@ -103,6 +96,12 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         address _royaltyReceiver,
         uint96 feeNumerator
     ) external onlyOwner returns(uint vaultId){
+        vaultId = _createNewVault(_tokenAddress);
+        _setTokenRoyalty(vaultId, _royaltyReceiver, feeNumerator);
+        emit VaultRoyaltySet(vaultId, _royaltyReceiver, feeNumerator);
+    }
+
+    function _createNewVault(address _tokenAddress) private returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
@@ -110,9 +109,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         Array.addIfNotExsist(allTokens, _tokenAddress);
         isDepositActiveForVaultId[vaultId] = true;
         isWithdrawalActiveForVaultId[vaultId] = true;
-        _setTokenRoyalty(vaultId, _royaltyReceiver, feeNumerator);
         emit NewVaultCreated(vaultId, _tokenAddress);
-        emit VaultRoyaltySet(vaultId, _royaltyReceiver, feeNumerator);
     }
 
     /**
