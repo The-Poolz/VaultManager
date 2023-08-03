@@ -175,7 +175,6 @@ describe('VaultManager', function () {
     expect(isWithdrawActive).to.equal(true);
     expect(receiverAddress).to.equal(await owner.getAddress());
     expect(royaltyAmount).to.equal(1);
-    // expect tx to emit event with royalty info
     expect(tx).to.emit(vaultManager, "VaultRoyaltySet").withArgs(vaultId, token.address, await owner.getAddress(), feeNumerator);
   })
 
