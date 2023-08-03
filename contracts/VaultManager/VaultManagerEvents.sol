@@ -17,7 +17,8 @@ contract VaultManagerEvents {
         uint amount
     );
     event VaultRoyaltySet(
-        uint indexed vaultId,
+        uint vaultId,
+        address indexed tokenAddress,
         address indexed receiver,
         uint96 indexed feeNumerator
     );

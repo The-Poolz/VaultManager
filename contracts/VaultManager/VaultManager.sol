@@ -99,7 +99,7 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         require(feeNumerator <= _feeDenominator(), "VaultManager: Royalty cannot be more than 100%");
         vaultId = _createNewVault(_tokenAddress);
         _setTokenRoyalty(vaultId, _royaltyReceiver, feeNumerator);
-        emit VaultRoyaltySet(vaultId, _royaltyReceiver, feeNumerator);
+        emit VaultRoyaltySet(vaultId, _tokenAddress, _royaltyReceiver, feeNumerator);
     }
 
     function _createNewVault(address _tokenAddress) private notZeroAddress(_tokenAddress) returns(uint vaultId){

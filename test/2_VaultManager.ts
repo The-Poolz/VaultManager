@@ -159,7 +159,7 @@ describe('VaultManager', function () {
   it("should create a vault with royalty", async () => {
     const feeNumerator = 100; // 1%
     const vaultId = await vaultManager.callStatic['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
-    await vaultManager['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
+    const tx = await vaultManager['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
 
     const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
@@ -175,6 +175,8 @@ describe('VaultManager', function () {
     expect(isWithdrawActive).to.equal(true);
     expect(receiverAddress).to.equal(await owner.getAddress());
     expect(royaltyAmount).to.equal(1);
+    // expect tx to emit event with royalty info
+    expect(tx).to.emit(vaultManager, "VaultRoyaltySet").withArgs(vaultId, token.address, await owner.getAddress(), feeNumerator);
   })
 
   
