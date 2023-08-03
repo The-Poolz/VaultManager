@@ -6,12 +6,14 @@ import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "poolz-helper-v2/contracts/Array.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
-contract VaultManager is IVaultManager, VaultManagerEvents, Ownable{
+contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     mapping(uint => address) public vaultIdToVault;
     mapping(address => uint[]) public tokenToVaultIds;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
+
     address[] public allTokens; // just an array of all tokens
     address public trustee;
     uint public totalVaults;
@@ -80,6 +82,27 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable{
     }
 
     function createNewVault(address _tokenAddress) external onlyOwner returns(uint vaultId){
+        vaultId = _createNewVault(_tokenAddress);
+    }
+
+    /// @dev used to create vaults with royalty
+    /// @param _royaltyReceiver address of the royalty receiver
+    /// @param feeNumerator is set in basis points
+    /// @param feeNumerator 100 points = 1% of the sale price will be sent to the receiver
+    /// @param feeNumerator 500 points = 5% of the sale price will be sent to the receiver
+    /// @param feeNumerator 1000 points = 10% of the sale price will be sent to the receiver
+    function createNewVault(
+        address _tokenAddress,
+        address _royaltyReceiver,
+        uint96 feeNumerator
+    ) external onlyOwner notZeroAddress(_royaltyReceiver) returns(uint vaultId){
+        require(feeNumerator <= _feeDenominator(), "VaultManager: Royalty cannot be more than 100%");
+        vaultId = _createNewVault(_tokenAddress);
+        _setTokenRoyalty(vaultId, _royaltyReceiver, feeNumerator);
+        emit VaultRoyaltySet(vaultId, _tokenAddress, _royaltyReceiver, feeNumerator);
+    }
+
+    function _createNewVault(address _tokenAddress) private notZeroAddress(_tokenAddress) returns(uint vaultId){
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);

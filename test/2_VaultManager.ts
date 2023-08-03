@@ -55,8 +55,8 @@ describe('VaultManager', function () {
   })
 
   it('should create a new vault', async function () {
-    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-    await vaultManager.createNewVault(token.address);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
@@ -67,13 +67,16 @@ describe('VaultManager', function () {
 
     const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
     const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    const [receiverAddress, royaltyAmount] = await vaultManager.royaltyInfo(vaultId,"100");
     expect(isDepositActive).to.equal(true);
     expect(isWithdrawActive).to.equal(true);
+    expect(receiverAddress).to.equal(ethers.constants.AddressZero);
+    expect(royaltyAmount).to.equal(0);
   });
 
   it('should get the token address', async function () {
-    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-    await vaultManager.createNewVault(token.address);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const tokenAddress = await vaultManager.vaultIdToTokenAddress(vaultId);
 
@@ -85,8 +88,8 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    const vaultId = await vaultManager.callStatic.createNewVault(token.address);
-    await vaultManager.createNewVault(token.address);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     await trustee.deposit(token.address, owner.getAddress(), amount);
 
@@ -101,7 +104,7 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    await vaultManager.createNewVault(token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const signers = await ethers.getSigners()
     const to = signers[1].address;
@@ -129,7 +132,7 @@ describe('VaultManager', function () {
     const amounts: BigNumber[] = [];
 
     for(let i = 0; i < 10; i++) {
-      await vaultManager.connect(owner).createNewVault(token.address);
+      await vaultManager.connect(owner)['createNewVault(address)'](token.address);
 
       const amount = (Math.floor(Math.random() * 100000) + 1000);
       amounts.push(ethers.BigNumber.from(amount));
@@ -151,7 +154,28 @@ describe('VaultManager', function () {
       expect(vaultToken).to.equal(token.address);
       expect(allTokens).to.deep.equal([token.address]);
     }
+  })
 
+  it("should create a vault with royalty", async () => {
+    const feeNumerator = 100; // 1%
+    const vaultId = await vaultManager.callStatic['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
+    const tx = await vaultManager['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
+
+    const totalVaults = await vaultManager.totalVaults();
+    expect(totalVaults).to.equal(1);
+    expect(vaultId).to.equal(totalVaults.sub(1).toString());
+
+    const vaultAddress = await vaultManager.vaultIdToVault(vaultId);
+    expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
+
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    const [receiverAddress, royaltyAmount] = await vaultManager.royaltyInfo(vaultId,"100");
+    expect(isDepositActive).to.equal(true);
+    expect(isWithdrawActive).to.equal(true);
+    expect(receiverAddress).to.equal(await owner.getAddress());
+    expect(royaltyAmount).to.equal(1);
+    expect(tx).to.emit(vaultManager, "VaultRoyaltySet").withArgs(vaultId, token.address, await owner.getAddress(), feeNumerator);
   })
 
   
