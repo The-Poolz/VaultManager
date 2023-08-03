@@ -32,10 +32,25 @@ describe('Vault Manager Fail', function () {
         await trustee.deployed();
     });
 
-    it("should fail to create new vault if called by non-governor", async () => {{
+    it("should fail to create new vault if called by non-governor(without royalty)", async () => {{
         await expect(vaultManager.connect(nonGovernor)['createNewVault(address)'](token.address))
             .to.be.revertedWith("Ownable: caller is not the owner");
     }})
+
+    it("should fail to create new vault if called by non-governor(with royalty)", async () => {{
+        await expect(vaultManager.connect(nonGovernor)['createNewVault(address,address,uint96)'](token.address, nonGovernor.getAddress(), 100))
+            .to.be.revertedWith("Ownable: caller is not the owner");
+    }})
+
+    it("should fail to create new vault with token as zero address", async () => {
+        await expect(vaultManager['createNewVault(address)'](ethers.constants.AddressZero))
+            .to.be.revertedWith("VaultManager: Zero address not allowed");
+    })
+
+    it("should fail to create new vault with royalty receiver as zero address", async () => {
+        await expect(vaultManager['createNewVault(address,address,uint96)'](token.address, ethers.constants.AddressZero, 100))
+            .to.be.revertedWith("VaultManager: Zero address not allowed");
+    })
 
     it("should fail to setTrustee if called by non-governor", async () => {
         const permittedAddress = await nonGovernor.getAddress();
