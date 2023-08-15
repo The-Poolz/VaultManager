@@ -74,6 +74,21 @@ describe('VaultManager', function () {
     expect(royaltyAmount).to.equal(0);
   });
 
+  it('should set trade start time by vault ID', async () => {
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
+
+    const tradeStartTime = Math.floor(Date.now() / 1000) + 1000;
+    await vaultManager.setTradeStartTime(vaultId, tradeStartTime);
+
+    const result = await vaultManager.vaultIdToTradeStartTime(vaultId);
+    expect(result).to.equal(tradeStartTime);
+
+    await vaultManager.setTradeStartTime(vaultId, 0);
+    const result2 = await vaultManager.vaultIdToTradeStartTime(vaultId);
+    expect(result2).to.equal(0);
+  })
+
   it('should get the token address', async function () {
     const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
     await vaultManager['createNewVault(address)'](token.address);
@@ -173,6 +188,51 @@ describe('VaultManager', function () {
     const [receiverAddress, royaltyAmount] = await vaultManager.royaltyInfo(vaultId,"100");
     expect(isDepositActive).to.equal(true);
     expect(isWithdrawActive).to.equal(true);
+    expect(receiverAddress).to.equal(await owner.getAddress());
+    expect(royaltyAmount).to.equal(1);
+    expect(tx).to.emit(vaultManager, "VaultRoyaltySet").withArgs(vaultId, token.address, await owner.getAddress(), feeNumerator);
+  })
+
+  it("should create a vault with trade start time", async () => {
+    const tradeStartTime = Math.floor(Date.now() / 1000) + 1000;
+    const vaultId = await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, tradeStartTime);
+    const tx = await vaultManager['createNewVault(address,uint256)'](token.address, tradeStartTime);
+
+    const totalVaults = await vaultManager.totalVaults();
+    expect(totalVaults).to.equal(1);
+    expect(vaultId).to.equal(totalVaults.sub(1).toString());
+
+    const vaultAddress = await vaultManager.vaultIdToVault(vaultId);
+    expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
+
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    const tradeStartTimeFromVault = await vaultManager.vaultIdToTradeStartTime(vaultId);
+    expect(isDepositActive).to.equal(true);
+    expect(isWithdrawActive).to.equal(true);
+    expect(tradeStartTimeFromVault).to.equal(tradeStartTime);
+  })
+
+  it("should create a vault with both trade start time and royalty", async () => {
+    const tradeStartTime = Math.floor(Date.now() / 1000) + 1000;
+    const feeNumerator = 100; // 1%
+    const vaultId = await vaultManager.callStatic['createNewVault(address,uint256,address,uint96)'](token.address, tradeStartTime, owner.getAddress(), feeNumerator);
+    const tx = await vaultManager['createNewVault(address,uint256,address,uint96)'](token.address, tradeStartTime, owner.getAddress(), feeNumerator);
+
+    const totalVaults = await vaultManager.totalVaults();
+    expect(totalVaults).to.equal(1);
+    expect(vaultId).to.equal(totalVaults.sub(1).toString());
+
+    const vaultAddress = await vaultManager.vaultIdToVault(vaultId);
+    expect(vaultAddress).to.not.equal(ethers.constants.AddressZero);
+
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    const tradeStartTimeFromVault = await vaultManager.vaultIdToTradeStartTime(vaultId);
+    const [receiverAddress, royaltyAmount] = await vaultManager.royaltyInfo(vaultId,"100");
+    expect(isDepositActive).to.equal(true);
+    expect(isWithdrawActive).to.equal(true);
+    expect(tradeStartTimeFromVault).to.equal(tradeStartTime);
     expect(receiverAddress).to.equal(await owner.getAddress());
     expect(royaltyAmount).to.equal(1);
     expect(tx).to.emit(vaultManager, "VaultRoyaltySet").withArgs(vaultId, token.address, await owner.getAddress(), feeNumerator);

@@ -32,7 +32,7 @@ describe('Vault Manager Fail', function () {
         await trustee.deployed();
     });
 
-    it("should fail to create new vault if called by non-governor(without royalty)", async () => {{
+    it("should fail to create new vault if called by non-governor(without royalty and tradeStartTime)", async () => {{
         await expect(vaultManager.connect(nonGovernor)['createNewVault(address)'](token.address))
             .to.be.revertedWith("Ownable: caller is not the owner");
     }})
@@ -42,6 +42,16 @@ describe('Vault Manager Fail', function () {
             .to.be.revertedWith("Ownable: caller is not the owner");
     }})
 
+    it("should fail to create new vault if called by non-governor(with tradeStartTime)", async () => {
+        await expect(vaultManager.connect(nonGovernor)['createNewVault(address,uint256)'](token.address, 100))
+            .to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("should fail to create new vault if called by non-governor(with royalty and tradeStartTime)", async () => {
+        await expect(vaultManager.connect(nonGovernor)['createNewVault(address,uint256,address,uint96)'](token.address, 100, nonGovernor.getAddress(), 100))
+            .to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
     it("should fail to create new vault with token as zero address", async () => {
         await expect(vaultManager['createNewVault(address)'](ethers.constants.AddressZero))
             .to.be.revertedWith("VaultManager: Zero address not allowed");
@@ -50,6 +60,11 @@ describe('Vault Manager Fail', function () {
     it("should fail to create new vault with royalty receiver as zero address", async () => {
         await expect(vaultManager['createNewVault(address,address,uint96)'](token.address, ethers.constants.AddressZero, 100))
             .to.be.revertedWith("VaultManager: Zero address not allowed");
+    })
+
+    it("should fail to create new vault with incorrect feeNumerator", async () => {
+        await expect(vaultManager.connect(governor)['createNewVault(address,address,uint96)'](token.address, governor.getAddress(), 10001))
+            .to.be.revertedWith("VaultManager: Royalty cannot be more than 100%");
     })
 
     it("should fail to setTrustee if called by non-governor", async () => {
@@ -103,9 +118,17 @@ describe('Vault Manager Fail', function () {
             .to.be.revertedWith("Ownable: caller is not the owner");
     })
 
-    it("should fail to create new vault with incorrect feeNumerator", async () => {
-        await expect(vaultManager.connect(governor)['createNewVault(address,address,uint96)'](token.address, governor.getAddress(), 10001))
-            .to.be.revertedWith("VaultManager: Royalty cannot be more than 100%");
+    it("should fail to start tradeStartTime if called by non owner", async () => {
+        const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+        await vaultManager['createNewVault(address)'](token.address);
+
+        await expect(vaultManager.connect(nonGovernor).setTradeStartTime(vaultId, 100))
+            .to.be.revertedWith("Ownable: caller is not the owner");
+    })
+
+    it("should fail to set tradeStartTime when vault does not exist", async () => {
+        await expect(vaultManager.setTradeStartTime(100, 100))
+            .to.be.revertedWith("VaultManager: Vault not found");
     })
 
   });
