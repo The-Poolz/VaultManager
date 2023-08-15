@@ -11,7 +11,6 @@ describe('VaultManager', function () {
   let trustee: MockTrustee
   let owner: Signer;
   let allSigners: Signer[];
-  const defaultTradeStartTime = 0;
 
   beforeEach(async function () {
     const Token = await ethers.getContractFactory('ERC20Token');
@@ -56,8 +55,8 @@ describe('VaultManager', function () {
   })
 
   it('should create a new vault', async function () {
-    const vaultId = await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
-    await vaultManager['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
@@ -76,8 +75,8 @@ describe('VaultManager', function () {
   });
 
   it('should get the token address', async function () {
-    const vaultId = await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
-    await vaultManager['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const tokenAddress = await vaultManager.vaultIdToTokenAddress(vaultId);
 
@@ -89,8 +88,8 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    const vaultId = await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
-    await vaultManager['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
 
     await trustee.deposit(token.address, owner.getAddress(), amount);
 
@@ -105,7 +104,7 @@ describe('VaultManager', function () {
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
 
-    await vaultManager['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
+    await vaultManager['createNewVault(address)'](token.address);
 
     const signers = await ethers.getSigners()
     const to = signers[1].address;
@@ -133,7 +132,7 @@ describe('VaultManager', function () {
     const amounts: BigNumber[] = [];
 
     for(let i = 0; i < 10; i++) {
-      await vaultManager.connect(owner)['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
+      await vaultManager.connect(owner)['createNewVault(address)'](token.address);
 
       const amount = (Math.floor(Math.random() * 100000) + 1000);
       amounts.push(ethers.BigNumber.from(amount));
@@ -159,8 +158,8 @@ describe('VaultManager', function () {
 
   it("should create a vault with royalty", async () => {
     const feeNumerator = 100; // 1%
-    const vaultId = await vaultManager.callStatic['createNewVault(address,uint256,address,uint96)'](token.address, defaultTradeStartTime, owner.getAddress(), feeNumerator);
-    const tx = await vaultManager['createNewVault(address,uint256,address,uint96)'](token.address, defaultTradeStartTime, owner.getAddress(), feeNumerator);
+    const vaultId = await vaultManager.callStatic['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
+    const tx = await vaultManager['createNewVault(address,address,uint96)'](token.address, owner.getAddress(), feeNumerator);
 
     const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
