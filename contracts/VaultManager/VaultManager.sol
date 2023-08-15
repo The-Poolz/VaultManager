@@ -95,23 +95,39 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         setTradeStartTime(vaultId, _tradeStartTime);
     }
 
-    /// @dev used to create vaults with royalty
-    /// @param _royaltyReceiver address of the royalty receiver
-    /// @param feeNumerator is set in basis points
-    /// @param feeNumerator 100 points = 1% of the sale price will be sent to the receiver
-    /// @param feeNumerator 500 points = 5% of the sale price will be sent to the receiver
-    /// @param feeNumerator 1000 points = 10% of the sale price will be sent to the receiver
+    function createNewVault(
+        address _tokenAddress,
+        address _royaltyReceiver,
+        uint96 _feeNumerator
+    ) external onlyOwner returns(uint vaultId){
+        vaultId = _createNewVault(_tokenAddress);
+        setVaultRoyalty(vaultId, _tokenAddress, _royaltyReceiver, _feeNumerator);
+    }
+
     function createNewVault(
         address _tokenAddress,
         uint _tradeStartTime,
         address _royaltyReceiver,
-        uint96 feeNumerator
-    ) external onlyOwner notZeroAddress(_royaltyReceiver) returns(uint vaultId){
-        require(feeNumerator <= _feeDenominator(), "VaultManager: Royalty cannot be more than 100%");
+        uint96 _feeNumerator
+    ) external onlyOwner returns(uint vaultId){
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
-        _setTokenRoyalty(vaultId, _royaltyReceiver, feeNumerator);
-        emit VaultRoyaltySet(vaultId, _tokenAddress, _royaltyReceiver, feeNumerator);
+        setVaultRoyalty(vaultId, _tokenAddress, _royaltyReceiver, _feeNumerator);
+    }
+
+    /// @dev used to create vaults with royalty
+    /// @param _royaltyReceiver address of the royalty receiver
+    /// @param _feeNumerator is set in basis points
+    /// @param _feeNumerator 100 points = 1% of the sale price will be sent to the receiver
+    /// @param _feeNumerator 500 points = 5% of the sale price will be sent to the receiver
+    /// @param _feeNumerator 1000 points = 10% of the sale price will be sent to the receiver
+    function setVaultRoyalty(uint _vaultId, address _tokenAddress, address _royaltyReceiver, uint96 _feeNumerator)
+        private
+        notZeroAddress(_royaltyReceiver)
+    {
+        require(_feeNumerator <= _feeDenominator(), "VaultManager: Royalty cannot be more than 100%");
+        _setTokenRoyalty(_vaultId, _royaltyReceiver, _feeNumerator);
+        emit VaultRoyaltySet(_vaultId, _tokenAddress, _royaltyReceiver, _feeNumerator);
     }
 
     function _createNewVault(address _tokenAddress) private notZeroAddress(_tokenAddress) returns(uint vaultId){
