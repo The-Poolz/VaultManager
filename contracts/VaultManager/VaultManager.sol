@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
 contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     mapping(uint => address) public vaultIdToVault;
+    mapping(uint => uint) public vaultIdToTradeStartTime;
     mapping(address => uint[]) public tokenToVaultIds;
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
@@ -60,6 +61,10 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         trustee = _address;
     }
 
+    function setTradeStartTime(uint _vaultId, uint _tradeStartTime) public onlyOwner vaultExists(_vaultId){
+        vaultIdToTradeStartTime[_vaultId] = _tradeStartTime;
+    }
+
     /**
      * @dev will be used to update the trustee address. This function will need extra approvals to be called.
      */
@@ -81,8 +86,9 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
     }
 
-    function createNewVault(address _tokenAddress) external onlyOwner returns(uint vaultId){
+    function createNewVault(address _tokenAddress, uint _tradeStartTime) external onlyOwner returns(uint vaultId){
         vaultId = _createNewVault(_tokenAddress);
+        setTradeStartTime(vaultId, _tradeStartTime);
     }
 
     /// @dev used to create vaults with royalty
@@ -93,11 +99,13 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     /// @param feeNumerator 1000 points = 10% of the sale price will be sent to the receiver
     function createNewVault(
         address _tokenAddress,
+        uint _tradeStartTime,
         address _royaltyReceiver,
         uint96 feeNumerator
     ) external onlyOwner notZeroAddress(_royaltyReceiver) returns(uint vaultId){
         require(feeNumerator <= _feeDenominator(), "VaultManager: Royalty cannot be more than 100%");
         vaultId = _createNewVault(_tokenAddress);
+        setTradeStartTime(vaultId, _tradeStartTime);
         _setTokenRoyalty(vaultId, _royaltyReceiver, feeNumerator);
         emit VaultRoyaltySet(vaultId, _tokenAddress, _royaltyReceiver, feeNumerator);
     }
