@@ -86,6 +86,10 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
     }
 
+    function createNewVault(address _tokenAddress) external onlyOwner returns(uint vaultId){
+        vaultId = _createNewVault(_tokenAddress);
+    }
+
     function createNewVault(address _tokenAddress, uint _tradeStartTime) external onlyOwner returns(uint vaultId){
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
