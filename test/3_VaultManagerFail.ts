@@ -6,6 +6,7 @@ import { VaultManager } from '../typechain-types/contracts/VaultManager';
 import { ERC20Token } from '../typechain-types/poolz-helper-v2/contracts/token';
 
 describe('Vault Manager Fail', function () {
+  const defaultTradeStartTime = 0;
 
   describe("OnlyGovernor Functions", function() {
     let vaultManager: VaultManager;
@@ -33,22 +34,22 @@ describe('Vault Manager Fail', function () {
     });
 
     it("should fail to create new vault if called by non-governor(without royalty)", async () => {{
-        await expect(vaultManager.connect(nonGovernor)['createNewVault(address)'](token.address))
+        await expect(vaultManager.connect(nonGovernor)['createNewVault(address,uint256)'](token.address, defaultTradeStartTime))
             .to.be.revertedWith("Ownable: caller is not the owner");
     }})
 
     it("should fail to create new vault if called by non-governor(with royalty)", async () => {{
-        await expect(vaultManager.connect(nonGovernor)['createNewVault(address,address,uint96)'](token.address, nonGovernor.getAddress(), 100))
+        await expect(vaultManager.connect(nonGovernor)['createNewVault(address,uint256,address,uint96)'](token.address, defaultTradeStartTime,  nonGovernor.getAddress(), 100))
             .to.be.revertedWith("Ownable: caller is not the owner");
     }})
 
     it("should fail to create new vault with token as zero address", async () => {
-        await expect(vaultManager['createNewVault(address)'](ethers.constants.AddressZero))
+        await expect(vaultManager['createNewVault(address,uint256)'](ethers.constants.AddressZero, defaultTradeStartTime))
             .to.be.revertedWith("VaultManager: Zero address not allowed");
     })
 
     it("should fail to create new vault with royalty receiver as zero address", async () => {
-        await expect(vaultManager['createNewVault(address,address,uint96)'](token.address, ethers.constants.AddressZero, 100))
+        await expect(vaultManager['createNewVault(address,uint256,address,uint96)'](token.address, defaultTradeStartTime, ethers.constants.AddressZero, 100))
             .to.be.revertedWith("VaultManager: Zero address not allowed");
     })
 
@@ -96,15 +97,15 @@ describe('Vault Manager Fail', function () {
     })
 
     it("should fail to set active status if called by non owner", async () => {
-        const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
-        await vaultManager['createNewVault(address)'](token.address);
+        const vaultId = await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
+        await vaultManager['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
 
         await expect(vaultManager.connect(nonGovernor).setActiveStatusForVaultId(vaultId, true, true))
             .to.be.revertedWith("Ownable: caller is not the owner");
     })
 
     it("should fail to create new vault with incorrect feeNumerator", async () => {
-        await expect(vaultManager.connect(governor)['createNewVault(address,address,uint96)'](token.address, governor.getAddress(), 10001))
+        await expect(vaultManager.connect(governor)['createNewVault(address,uint256,address,uint96)'](token.address, defaultTradeStartTime, governor.getAddress(), 10001))
             .to.be.revertedWith("VaultManager: Royalty cannot be more than 100%");
     })
 
@@ -199,8 +200,8 @@ describe('Vault Manager Fail', function () {
         await trustee.deployed();
 
         await vaultManager.setTrustee(trustee.address);
-        vaultId = (await vaultManager.callStatic['createNewVault(address)'](token.address)).toString();
-        await vaultManager['createNewVault(address)'](token.address);
+        vaultId = (await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, defaultTradeStartTime)).toString();
+        await vaultManager['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
     });
 
     it("should fail to deposit when called by non trustee", async () => {
@@ -244,8 +245,8 @@ describe('Vault Manager Fail', function () {
         await trustee.deployed();
 
         await vaultManager.setTrustee(trustee.address);
-        vaultId = (await vaultManager.callStatic['createNewVault(address)'](token.address)).toString();
-        await vaultManager['createNewVault(address)'](token.address);
+        vaultId = (await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, defaultTradeStartTime)).toString();
+        await vaultManager['createNewVault(address,uint256)'](token.address, defaultTradeStartTime);
         await vaultManager.setActiveStatusForVaultId(vaultId, false, false);
     });
 
