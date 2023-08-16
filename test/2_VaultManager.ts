@@ -196,7 +196,6 @@ describe('VaultManager', function () {
   it("should create a vault with trade start time", async () => {
     const tradeStartTime = Math.floor(Date.now() / 1000) + 1000;
     const vaultId = await vaultManager.callStatic['createNewVault(address,uint256)'](token.address, tradeStartTime);
-    const tx = await vaultManager['createNewVault(address,uint256)'](token.address, tradeStartTime);
 
     const totalVaults = await vaultManager.totalVaults();
     expect(totalVaults).to.equal(1);
