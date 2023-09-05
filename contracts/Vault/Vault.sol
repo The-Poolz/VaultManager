@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IVault.sol";
-import "poolz-helper-v2/contracts/ERC20Helper.sol";
+import "@poolzfinance/poolz-helper-v2/contracts/ERC20Helper.sol";
 
 contract Vault is IVault, ERC20Helper{
     address public override tokenAddress;
