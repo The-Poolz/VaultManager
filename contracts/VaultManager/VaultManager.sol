@@ -5,7 +5,7 @@ import "./IVaultManager.sol";
 import "./VaultManagerEvents.sol";
 import "../Vault/Vault.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "poolz-helper-v2/contracts/Array.sol";
+import "@poolzfinance/poolz-helper-v2/contracts/Array.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 
 contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
