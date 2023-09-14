@@ -46,7 +46,7 @@ To deposit tokens into a vault, the external contract should call `depositByToke
 
 #### Withdraw
 
-To withdraw tokens, the external contract must use `msg.sender` when calling the `withdraw` function.
+To withdraw tokens, the external contract ` calls the `withdraw` function.
 
 ### Owner Functionalities
 
@@ -58,13 +58,7 @@ If you are the owner of the deployed contracts, you have the following additiona
 2. **Set Trade Start Time**: Can be used to change the trade start time initially set during vault creation with `createNewVault`.
 3. **Set Vault Royalty**: Can be used to change the royalty details initially set during vault creation with `createNewVault`.
 4. **Create New Vault**: This function has multiple overloads, allowing you to create new vaults with different configurations.
-
-1. **Set Trade Start Time**: Using `setTradeStartTime`, you can set the trade start time for a specific vault ID.
-2. **Set Trustee**: You can set the trustee address using `setTrustee`.
-3. **Update Trustee**: You can update the trustee address using `updateTrustee`.
-4. **Set Vault Royalty**: Using `setVaultRoyalty`, you can set the royalty details for a vault.
-5. **Create New Vault**: This function has multiple overloads, allowing you to create new vaults with different configurations.
-
+5. **Update Trustee**: You can update the trustee address using `updateTrustee`.
 
 
 #### In Vault.sol
@@ -73,7 +67,6 @@ The Vault is an internal contract that is managed solely by its creator, the Vau
 
 1. **Withdraw**: The Vault Manager, which is the entity that creates the vault, has the ability to withdraw tokens to a specified address using the `withdraw` function.
 
-1. **Withdraw**: As the manager, you can withdraw tokens to a specified address using `withdraw`.
 
 ### Role of the Trustee
 
