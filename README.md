@@ -18,25 +18,42 @@ Vault Manager is a smart contract project that helps other contracts manage ERC2
 
 1. Clone the repository:
 
-```
+\```
 git clone https://github.com/The-Poolz/VaultManager.git
-```
+\```
 
 2. Install the dependencies:
 
-```
+\```
 npm install
-```
+\```
 
 3. Run the Hardhat test:
 
-```
+\```
 npx hardhat test
-```
+\```
 
 ## Usage
 
-After deploying the contracts, the owner (the deployer) can perform various operations (e.g., deposit, withdraw, etc.).
+After deploying the contracts, the owner (the deployer) can perform various operations.
+
+### From an External Contract
+
+#### Deposit
+
+To deposit tokens into a vault, the external contract should call `depositByToken` from `VaultManager.sol`. Make sure that `tx.origin` is set to the `_from` address.
+
+#### Withdraw
+
+To withdraw tokens, the external contract must send `msg.sender` to the `withdraw` function.
+
+### Owner Functionalities
+
+If you are the owner of the deployed contracts, you have the following additional functionalities:
+
+1. **Set Trade Start Time**: You can set the trade start time for a specific vault ID using `setTradeStartTime`.
+2. **Create New Vault**: You can create a new vault for a given token address using `createNewVault`. This function also has an overload to include a trade start time.
 
 ## Code Overview
 
