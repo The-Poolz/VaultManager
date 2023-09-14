@@ -42,28 +42,41 @@ After deploying the contracts, the owner (the deployer) can perform various oper
 
 #### Deposit
 
-To deposit tokens into a vault, the external contract should call `depositByToken` from `VaultManager.sol`. Make sure that `tx.origin` is set to the `_from` address.
+To deposit tokens into a vault, the external contract should call `depositByToken` from `VaultManager.sol`. Make sure that `msg.sender` is set to the `_from` address.
 
 #### Withdraw
 
-To withdraw tokens, the external contract must send `msg.sender` to the `withdraw` function.
+To withdraw tokens, the external contract must use `msg.sender` when calling the `withdraw` function.
 
 ### Owner Functionalities
 
 If you are the owner of the deployed contracts, you have the following additional functionalities:
 
-1. **Set Trade Start Time**: You can set the trade start time for a specific vault ID using `setTradeStartTime`.
-2. **Create New Vault**: You can create a new vault for a given token address using `createNewVault`. This function also has an overload to include a trade start time.
+#### In VaultManager.sol
+
+1. **Set Trade Start Time**: Using `setTradeStartTime`, you can set the trade start time for a specific vault ID.
+2. **Set Trustee**: You can set the trustee address using `setTrustee`.
+3. **Update Trustee**: You can update the trustee address using `updateTrustee`.
+4. **Set Vault Royalty**: Using `setVaultRoyalty`, you can set the royalty details for a vault.
+5. **Create New Vault**: This function has multiple overloads, allowing you to create new vaults with different configurations.
+
+#### In Vault.sol
+
+1. **Withdraw**: As the manager, you can withdraw tokens to a specified address using `withdraw`.
+
+### Role of the Trustee
+
+Only the trustee can use the tokens stored in the vaults, not the owner.
 
 ## Code Overview
 
 ### Solidity Contracts
 
-- [IVault.sol](./contracts/IVault.sol): Defines the interface for Vault contract.
-- [Vault.sol](./contracts/Vault.sol): Implements the Vault functionalities.
-- [IVaultManager.sol](./contracts/IVaultManager.sol): Defines the interface for Vault Manager.
-- [VaultManager.sol](./contracts/VaultManager.sol): Implements the Vault Manager functionalities.
-- [VaultManagerEvents.sol](./contracts/VaultManagerEvents.sol): Contains events for Vault Manager.
+- [IVault.sol](./contracts/Vault/IVault.sol): Defines the interface for Vault contract.
+- [Vault.sol](./contracts/Vault/Vault.sol): Implements the Vault functionalities.
+- [IVaultManager.sol](./contracts/VaultManager/IVaultManager.sol): Defines the interface for Vault Manager.
+- [VaultManager.sol](./contracts/VaultManager/VaultManager.sol): Implements the Vault Manager functionalities.
+- [VaultManagerEvents.sol](./contracts/VaultManager/VaultManagerEvents.sol): Contains events for Vault Manager.
 
 ### Tests
 
