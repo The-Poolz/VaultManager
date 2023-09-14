@@ -18,21 +18,21 @@ Vault Manager is a smart contract project that helps other contracts manage ERC2
 
 1. Clone the repository:
 
-\```
+```
 git clone https://github.com/The-Poolz/VaultManager.git
-\```
+```
 
 2. Install the dependencies:
 
-\```
+```
 npm install
-\```
+```
 
 3. Run the Hardhat test:
 
-\```
+```
 npx hardhat test
-\```
+```
 
 ## Usage
 
