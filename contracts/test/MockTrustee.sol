@@ -10,8 +10,8 @@ contract MockTrustee{
         vaultManager = IVaultManager(_vaultManager);
     }
 
-    function deposit(address _tokenAddress, address from, uint _amount) external returns (uint vaultId){
-        vaultId = vaultManager.depositByToken(_tokenAddress, from, _amount);
+    function deposit(address _tokenAddress, address from, uint _amount, bytes memory _signature) external returns (uint vaultId){
+        vaultId = vaultManager.depositByToken(_tokenAddress, from, _amount, _signature);
     }
 
     function withdraw(uint _vaultId, address to, uint _amount) external{
