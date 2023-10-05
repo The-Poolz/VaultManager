@@ -186,18 +186,12 @@ describe("VaultManager", function () {
         token.address
       );
       const totalVaults = await vaultManager.totalVaults();
-      const totalNumberOfTokens = await vaultManager.getTotalNumberOfTokens();
-      const vaultToken = await vaultManager.allTokens(0);
-      const allTokens = await vaultManager.getAllTokens();
       expect(totalVaults).to.equal(i + 1);
       expect(vaultBalance).to.equal(amount);
       expect(vaultBalanceByToken).to.equal(amount);
-      expect(totalNumberOfTokens).to.equal(1);
       expect(totalBalance).to.equal(
         amounts.reduce((a, b) => a.add(b), ethers.constants.Zero)
       );
-      expect(vaultToken).to.equal(token.address);
-      expect(allTokens).to.deep.equal([token.address]);
     }
   });
 

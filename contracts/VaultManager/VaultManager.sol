@@ -15,7 +15,6 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     mapping(uint => bool) public isDepositActiveForVaultId;
     mapping(uint => bool) public isWithdrawalActiveForVaultId;
 
-    address[] public allTokens; // just an array of all tokens
     address public trustee;
     uint public totalVaults;
 
@@ -173,7 +172,6 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
         tokenToVaultIds[_tokenAddress].push(vaultId);
-        Array.addIfNotExsist(allTokens, _tokenAddress);
         isDepositActiveForVaultId[vaultId] = true;
         isWithdrawalActiveForVaultId[vaultId] = true;
         emit NewVaultCreated(vaultId, _tokenAddress);
@@ -259,14 +257,6 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         vaultId = tokenToVaultIds[_tokenAddress][
             getTotalVaultsByToken(_tokenAddress) - 1
         ];
-    }
-
-    function getAllTokens() external view returns (address[] memory) {
-        return allTokens;
-    }
-
-    function getTotalNumberOfTokens() external view returns (uint) {
-        return allTokens.length;
     }
 
     function vaultIdToTokenAddress(
