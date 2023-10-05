@@ -186,18 +186,34 @@ contract VaultManager is
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
 
-    /**
+    /*
      * @dev Will be used by the Trustee to deposit tokens to the vault.
      * @param _from Trustee is responsible to provide the correct _from address.
      */
     function depositByToken(
         address _tokenAddress,
-        address _from,
-        uint _amount,
-        bytes memory _signature
+        uint _amount
     )
         external
         override
+        isTrustee
+        isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
+        returns (uint vaultId)
+    {
+        vaultId = getCurrentVaultIdByToken(_tokenAddress);
+        address vaultAddress = vaultIdToVault[vaultId];
+        assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
+        IERC20(_tokenAddress).transferFrom(trustee, vaultAddress, _amount);
+        emit Deposited(vaultId, _tokenAddress, _amount);
+    }
+
+    function safeDeposit (
+        address _tokenAddress,
+        uint _amount,
+        address _from,
+        bytes memory _signature
+    )
+        external
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns (uint vaultId)
@@ -218,7 +234,7 @@ contract VaultManager is
         address vaultAddress = vaultIdToVault[vaultId];
         assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
         IERC20(_tokenAddress).transferFrom(_from, vaultAddress, _amount);
-        emit Deposited(vaultId, _tokenAddress, _from, _amount);
+        // emit Deposited(vaultId, _tokenAddress, _from, _amount);
     }
 
     /**
