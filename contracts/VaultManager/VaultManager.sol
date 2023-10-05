@@ -207,13 +207,14 @@ contract VaultManager is
         emit Deposited(vaultId, _tokenAddress, _amount);
     }
 
-    function safeDeposit (
+    function safeDeposit(
         address _tokenAddress,
         uint _amount,
         address _from,
         bytes memory _signature
     )
         external
+        override
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns (uint vaultId)
