@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/Array.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "./SignCheck.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 
 contract VaultManager is
     IVaultManager,
@@ -15,6 +17,7 @@ contract VaultManager is
     Ownable,
     ERC2981,
     SignCheck
+    ReentrancyGuard
 {
     mapping(uint => address) public vaultIdToVault;
     mapping(uint => uint) public vaultIdToTradeStartTime;
@@ -196,15 +199,20 @@ contract VaultManager is
     )
         external
         override
+        nonReentrant
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns (uint vaultId)
     {
+        uint balanceBefore = getVaultBalanceByVaultId(
+            getCurrentVaultIdByToken(_tokenAddress)
+        );
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
         assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
         IERC20(_tokenAddress).transferFrom(trustee, vaultAddress, _amount);
         emit Deposited(vaultId, _tokenAddress, _amount);
+        assert(getVaultBalanceByVaultId(vaultId) == balanceBefore + _amount);
     }
 
     function safeDeposit(
@@ -250,12 +258,15 @@ contract VaultManager is
         external
         override
         isTrustee
+        nonReentrant
         vaultExists(_vaultId)
         isWithdrawalActive(_vaultId)
     {
+        uint balanceBefore = getVaultBalanceByVaultId(_vaultId);
         Vault vault = Vault(vaultIdToVault[_vaultId]);
         vault.withdraw(_to, _amount);
         emit Withdrawn(_vaultId, vault.tokenAddress(), _to, _amount);
+        assert(getVaultBalanceByVaultId(_vaultId) == balanceBefore - _amount);
     }
 
     function getVaultBalanceByVaultId(
