@@ -7,7 +7,6 @@ contract VaultManagerEvents {
     event Deposited(
         uint indexed vaultId,
         address indexed tokenAddress,
-        address indexed from,
         uint amount
     );
     event Withdrawn(
