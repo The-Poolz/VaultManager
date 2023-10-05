@@ -4,6 +4,7 @@ import { ethers } from 'hardhat';
 import { VaultManager } from '../typechain-types/contracts/VaultManager';
 import { MockTrustee } from '../typechain-types/contracts/test';
 import { ERC20Token } from '../typechain-types/poolz-helper-v2/contracts/token';
+import { getDepositeHashToSign } from './utils';
 
 describe('VaultManager', function () {
   let vaultManager: VaultManager;
@@ -99,6 +100,7 @@ describe('VaultManager', function () {
   });
 
   it('should deposit tokens to a vault', async function () {
+    // const packing = await vaultManager.getPacked(token.address, owner.getAddress(), amount, currentNonce.toString());
     await vaultManager.setTrustee(trustee.address);
     const amount = ethers.utils.parseEther('0.000001');
     await token.approve(vaultManager.address, amount);
@@ -106,7 +108,11 @@ describe('VaultManager', function () {
     const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
     await vaultManager['createNewVault(address)'](token.address);
 
-    await trustee.deposit(token.address, owner.getAddress(), amount);
+    const currentNonce = await vaultManager.nonces(owner.getAddress());
+    const hashToSign = getDepositeHashToSign(token.address, await owner.getAddress(), amount, currentNonce);
+    const signature = await owner.signMessage(hashToSign);
+
+    await trustee.connect(owner).deposit(token.address, owner.getAddress(), amount, signature);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
@@ -124,7 +130,10 @@ describe('VaultManager', function () {
     const signers = await ethers.getSigners()
     const to = signers[1].address;
     const vaultId = 0; 
-    await trustee.deposit(token.address, owner.getAddress(), amount);
+    const currentNonce = await vaultManager.nonces(owner.getAddress());
+    const hashToSign = getDepositeHashToSign(token.address, await owner.getAddress(), amount, currentNonce);
+    const signature = await owner.signMessage(hashToSign);
+    await trustee.deposit(token.address, owner.getAddress(), amount, signature);
 
     await trustee.withdraw(vaultId, to, amount)
 
@@ -152,8 +161,12 @@ describe('VaultManager', function () {
       const amount = (Math.floor(Math.random() * 100000) + 1000);
       amounts.push(ethers.BigNumber.from(amount));
 
-      const vaultId = await trustee.connect(permitted).callStatic.deposit(token.address, permitted.getAddress(), amount);
-      await trustee.connect(permitted).deposit(token.address, permitted.getAddress(), amount);
+      const currentNonce = await vaultManager.nonces(permitted.getAddress());
+      const hashToSign = getDepositeHashToSign(token.address, await permitted.getAddress(), amount, currentNonce);
+      const signature = await permitted.signMessage(hashToSign);
+
+      const vaultId = await trustee.connect(permitted).callStatic.deposit(token.address, permitted.getAddress(), amount, signature);
+      await trustee.connect(permitted).deposit(token.address, permitted.getAddress(), amount, signature);
       const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
       const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
       const totalBalance = await vaultManager.getAllVaultBalanceByToken(token.address);

@@ -4,6 +4,7 @@ import { ethers } from 'hardhat';
 import { MockTrustee } from '../typechain-types';
 import { VaultManager } from '../typechain-types/contracts/VaultManager';
 import { ERC20Token } from '../typechain-types/poolz-helper-v2/contracts/token';
+import { getDepositeHashToSign, mockSign } from './utils';
 
 describe('Vault Manager Fail', function () {
 
@@ -166,7 +167,7 @@ describe('Vault Manager Fail', function () {
     })
 
     it("should fail to deposit", async () => {
-        await expect(trustee.deposit(token.address, governor.getAddress(), 100))
+        await expect(trustee.deposit(token.address, governor.getAddress(), 100, mockSign))
             .to.be.revertedWith("VaultManager: No vaults for this token");
     })
 
@@ -203,6 +204,7 @@ describe('Vault Manager Fail', function () {
     let trustee: MockTrustee;
     let token: ERC20Token;
     let nonPermitted: Signer;
+    let depositor: Signer;
     let vaultId: string
 
     beforeEach(async function () {
@@ -212,6 +214,7 @@ describe('Vault Manager Fail', function () {
         
         const signers = await ethers.getSigners();
         nonPermitted = signers[1];
+        depositor = signers[2];
 
         const VaultManager = await ethers.getContractFactory('VaultManager');
         vaultManager = await VaultManager.deploy();
@@ -226,20 +229,32 @@ describe('Vault Manager Fail', function () {
         await vaultManager['createNewVault(address)'](token.address);
     });
 
+    
     it("should fail to deposit when called by non trustee", async () => {
-      await expect(vaultManager.connect(nonPermitted).depositByToken(token.address, nonPermitted.getAddress(), 100))
-          .to.be.revertedWith("VaultManager: Not Trustee");
+        await expect(vaultManager.connect(nonPermitted).depositByToken(token.address, nonPermitted.getAddress(), 100, mockSign))
+        .to.be.revertedWith("VaultManager: Not Trustee");
     });
-
-    it("should fail to deposite when origin not equal to _from", async () => {
-      await expect(trustee.deposit(token.address, nonPermitted.getAddress(), 100))
-        .to.be.revertedWith("VaultManager: Only origin can deposit");
+    
+    it("should fail to withdraw when called by non trustee", async () => {
+        await expect(vaultManager.connect(nonPermitted).withdrawByVaultId(vaultId, nonPermitted.getAddress(), 100))
+        .to.be.revertedWith("VaultManager: Not Trustee");
+    });
+    
+    it("should fail to deposite when tx.origin not equal to fromAddress", async () => {
+        const currentNonce = await vaultManager.nonces(depositor.getAddress());
+        const hashToSign = getDepositeHashToSign(token.address, await depositor.getAddress(), 100, currentNonce);
+        const signature = await nonPermitted.signMessage(hashToSign);
+        const tx = trustee.connect(nonPermitted).deposit(token.address, depositor.getAddress(), 100, signature);
+        await expect(tx).to.be.revertedWith("VaultManager: Only origin can deposit");
     })
 
-    it("should fail to withdraw when called by non trustee", async () => {
-      await expect(vaultManager.connect(nonPermitted).withdrawByVaultId(vaultId, nonPermitted.getAddress(), 100))
-          .to.be.revertedWith("VaultManager: Not Trustee");
-    });
+    it("should fail to deposite when incorrect amount is signed", async () => {
+        const currentNonce = await vaultManager.nonces(depositor.getAddress());
+        const hashToSign = getDepositeHashToSign(token.address, await depositor.getAddress(), 100, currentNonce);
+        const signature = await depositor.signMessage(hashToSign);
+        const tx = trustee.connect(depositor).deposit(token.address, depositor.getAddress(), 1000, signature);
+        await expect(tx).to.be.revertedWith("VaultManager: Only origin can deposit");
+    })
 
   });
 
@@ -273,7 +288,7 @@ describe('Vault Manager Fail', function () {
     });
 
     it("should fail to deposit", async () => {
-      await expect(trustee.deposit(token.address, governor.getAddress(), 100))
+      await expect(trustee.deposit(token.address, governor.getAddress(), 100, mockSign))
          .to.be.revertedWith("VaultManager: Deposits are frozen");
     });
 
