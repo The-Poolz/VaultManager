@@ -223,6 +223,7 @@ contract VaultManager is
     )
         external
         override
+        nonReentrant
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
         returns (uint vaultId)
