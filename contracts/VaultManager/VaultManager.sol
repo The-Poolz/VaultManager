@@ -19,32 +19,44 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     address public trustee;
     uint public totalVaults;
 
-    modifier vaultExists(uint _vaultId){
-        require(vaultIdToVault[_vaultId] != address(0), "VaultManager: Vault not found");
+    modifier vaultExists(uint _vaultId) {
+        require(
+            vaultIdToVault[_vaultId] != address(0),
+            "VaultManager: Vault not found"
+        );
         _;
     }
 
-    modifier isTrustee(){
+    modifier isTrustee() {
         require(trustee == msg.sender, "VaultManager: Not Trustee");
         _;
     }
 
-    modifier isDepositActive(uint _vaultId){
-        require(isDepositActiveForVaultId[_vaultId], "VaultManager: Deposits are frozen");
+    modifier isDepositActive(uint _vaultId) {
+        require(
+            isDepositActiveForVaultId[_vaultId],
+            "VaultManager: Deposits are frozen"
+        );
         _;
     }
 
-    modifier isWithdrawalActive(uint _vaultId){
-        require(isWithdrawalActiveForVaultId[_vaultId], "VaultManager: Withdrawals are frozen");
+    modifier isWithdrawalActive(uint _vaultId) {
+        require(
+            isWithdrawalActiveForVaultId[_vaultId],
+            "VaultManager: Withdrawals are frozen"
+        );
         _;
     }
 
-    modifier notZeroAddress(address _address){
-        require(_address != address(0), "VaultManager: Zero address not allowed");
+    modifier notZeroAddress(address _address) {
+        require(
+            _address != address(0),
+            "VaultManager: Zero address not allowed"
+        );
         _;
     }
 
-    modifier notEOA(address _address){
+    modifier notEOA(address _address) {
         require(_address.code.length > 0, "VaultManager: EOA not allowed");
         _;
     }
@@ -52,45 +64,49 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     /**
      * @dev will be used only once to set the trustee address initially.
      */
-    function setTrustee(address _address) external
-        onlyOwner
-        notZeroAddress(_address)
-        notEOA(_address)
-    {
+    function setTrustee(
+        address _address
+    ) external onlyOwner notZeroAddress(_address) notEOA(_address) {
         require(trustee == address(0), "VaultManager: Trustee already set");
         trustee = _address;
     }
 
-    function setTradeStartTime(uint _vaultId, uint _tradeStartTime) public onlyOwner vaultExists(_vaultId){
+    function setTradeStartTime(
+        uint _vaultId,
+        uint _tradeStartTime
+    ) public onlyOwner vaultExists(_vaultId) {
         vaultIdToTradeStartTime[_vaultId] = _tradeStartTime;
     }
 
     /**
      * @dev will be used to update the trustee address. This function will need extra approvals to be called.
      */
-    function updateTrustee(address _address) external
-        onlyOwner
-        notZeroAddress(_address)
-        notEOA(_address)
-    {
+    function updateTrustee(
+        address _address
+    ) external onlyOwner notZeroAddress(_address) notEOA(_address) {
         require(trustee != address(0), "VaultManager: Trustee not set yet");
         trustee = _address;
     }
 
-    function setActiveStatusForVaultId(uint _vaultId, bool _depositStatus, bool _withdrawStatus)
-        external
-        onlyOwner
-        vaultExists(_vaultId)
-    {
+    function setActiveStatusForVaultId(
+        uint _vaultId,
+        bool _depositStatus,
+        bool _withdrawStatus
+    ) external onlyOwner vaultExists(_vaultId) {
         isDepositActiveForVaultId[_vaultId] = _depositStatus;
         isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
     }
 
-    function createNewVault(address _tokenAddress) external onlyOwner returns(uint vaultId){
+    function createNewVault(
+        address _tokenAddress
+    ) external onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
     }
 
-    function createNewVault(address _tokenAddress, uint _tradeStartTime) external onlyOwner returns(uint vaultId){
+    function createNewVault(
+        address _tokenAddress,
+        uint _tradeStartTime
+    ) external onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
     }
@@ -99,9 +115,14 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         address _tokenAddress,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) external onlyOwner returns(uint vaultId){
+    ) external onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
-        setVaultRoyalty(vaultId, _tokenAddress, _royaltyReceiver, _feeNumerator);
+        setVaultRoyalty(
+            vaultId,
+            _tokenAddress,
+            _royaltyReceiver,
+            _feeNumerator
+        );
     }
 
     function createNewVault(
@@ -109,10 +130,15 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         uint _tradeStartTime,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) external onlyOwner returns(uint vaultId){
+    ) external onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
-        setVaultRoyalty(vaultId, _tokenAddress, _royaltyReceiver, _feeNumerator);
+        setVaultRoyalty(
+            vaultId,
+            _tokenAddress,
+            _royaltyReceiver,
+            _feeNumerator
+        );
     }
 
     /// @dev used to create vaults with royalty
@@ -121,16 +147,28 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
     /// @param _feeNumerator 100 points = 1% of the sale price will be sent to the receiver
     /// @param _feeNumerator 500 points = 5% of the sale price will be sent to the receiver
     /// @param _feeNumerator 1000 points = 10% of the sale price will be sent to the receiver
-    function setVaultRoyalty(uint _vaultId, address _tokenAddress, address _royaltyReceiver, uint96 _feeNumerator)
-        private
-        notZeroAddress(_royaltyReceiver)
-    {
-        require(_feeNumerator <= _feeDenominator(), "VaultManager: Royalty cannot be more than 100%");
+    function setVaultRoyalty(
+        uint _vaultId,
+        address _tokenAddress,
+        address _royaltyReceiver,
+        uint96 _feeNumerator
+    ) private notZeroAddress(_royaltyReceiver) {
+        require(
+            _feeNumerator <= _feeDenominator(),
+            "VaultManager: Royalty cannot be more than 100%"
+        );
         _setTokenRoyalty(_vaultId, _royaltyReceiver, _feeNumerator);
-        emit VaultRoyaltySet(_vaultId, _tokenAddress, _royaltyReceiver, _feeNumerator);
+        emit VaultRoyaltySet(
+            _vaultId,
+            _tokenAddress,
+            _royaltyReceiver,
+            _feeNumerator
+        );
     }
 
-    function _createNewVault(address _tokenAddress) private notZeroAddress(_tokenAddress) returns(uint vaultId){
+    function _createNewVault(
+        address _tokenAddress
+    ) private notZeroAddress(_tokenAddress) returns (uint vaultId) {
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
@@ -141,30 +179,36 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         emit NewVaultCreated(vaultId, _tokenAddress);
     }
 
-    /**
+    /*
      * @dev Will be used by the Trustee to deposit tokens to the vault.
      * @param _from Trustee is responsible to provide the correct _from address.
      */
-    function depositByToken(address _tokenAddress, address _from, uint _amount)
+    function depositByToken(
+        address _tokenAddress,
+        uint _amount
+    )
         external
         override
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
-        returns(uint vaultId)
-    {   
-        require(tx.origin == _from, "VaultManager: Only origin can deposit");
+        returns (uint vaultId)
+    {
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         address vaultAddress = vaultIdToVault[vaultId];
         assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
-        IERC20(_tokenAddress).transferFrom(_from, vaultAddress, _amount);
-        emit Deposited(vaultId, _tokenAddress, _from, _amount);
+        IERC20(_tokenAddress).transferFrom(trustee, vaultAddress, _amount);
+        emit Deposited(vaultId, _tokenAddress, _amount);
     }
 
     /**
      * @dev Will be used by the Trustee to deposit tokens to the vault.
      * @param _to Trustee is responsible to provide the correct _to address.
      */
-    function withdrawByVaultId(uint _vaultId, address _to, uint _amount)
+    function withdrawByVaultId(
+        uint _vaultId,
+        address _to,
+        uint _amount
+    )
         external
         override
         isTrustee
@@ -176,62 +220,58 @@ contract VaultManager is IVaultManager, VaultManagerEvents, Ownable, ERC2981 {
         emit Withdrawn(_vaultId, vault.tokenAddress(), _to, _amount);
     }
 
-    function getVaultBalanceByVaultId(uint _vaultId)
-        public
-        view
-        vaultExists(_vaultId)
-    returns(uint){
+    function getVaultBalanceByVaultId(
+        uint _vaultId
+    ) public view vaultExists(_vaultId) returns (uint) {
         return Vault(vaultIdToVault[_vaultId]).tokenBalance();
     }
 
-    function getCurrentVaultBalanceByToken(address _tokenAddress)
-        external
-        view
-    returns(uint){
-        return Vault(vaultIdToVault[getCurrentVaultIdByToken(_tokenAddress)]).tokenBalance();
+    function getCurrentVaultBalanceByToken(
+        address _tokenAddress
+    ) external view returns (uint) {
+        return
+            Vault(vaultIdToVault[getCurrentVaultIdByToken(_tokenAddress)])
+                .tokenBalance();
     }
 
-    function getAllVaultBalanceByToken(address _tokenAddress)
-        external
-        view
-        returns(uint balance)
-    {
+    function getAllVaultBalanceByToken(
+        address _tokenAddress
+    ) external view returns (uint balance) {
         uint[] memory vaultIds = tokenToVaultIds[_tokenAddress];
-        for(uint i=0; i < vaultIds.length; i++){
+        for (uint i = 0; i < vaultIds.length; i++) {
             balance += Vault(vaultIdToVault[vaultIds[i]]).tokenBalance();
         }
     }
 
-    function getTotalVaultsByToken(address _tokenAddress) public view returns(uint _totalVaults) {
+    function getTotalVaultsByToken(
+        address _tokenAddress
+    ) public view returns (uint _totalVaults) {
         _totalVaults = tokenToVaultIds[_tokenAddress].length;
     }
 
-    function getCurrentVaultIdByToken(address _tokenAddress)
-        public
-        view
-        returns(uint vaultId)
-    {
-        require(getTotalVaultsByToken(_tokenAddress) > 0, "VaultManager: No vaults for this token");
-        vaultId = tokenToVaultIds[_tokenAddress][getTotalVaultsByToken(_tokenAddress) - 1];
+    function getCurrentVaultIdByToken(
+        address _tokenAddress
+    ) public view returns (uint vaultId) {
+        require(
+            getTotalVaultsByToken(_tokenAddress) > 0,
+            "VaultManager: No vaults for this token"
+        );
+        vaultId = tokenToVaultIds[_tokenAddress][
+            getTotalVaultsByToken(_tokenAddress) - 1
+        ];
     }
 
-    function getAllTokens() external view returns(address[] memory){
+    function getAllTokens() external view returns (address[] memory) {
         return allTokens;
     }
 
-    function getTotalNumberOfTokens() external view returns(uint){
+    function getTotalNumberOfTokens() external view returns (uint) {
         return allTokens.length;
     }
 
     function vaultIdToTokenAddress(
         uint _vaultId
-    )
-        external
-        view
-        override
-        vaultExists(_vaultId)
-        returns (address token)
-    {
+    ) external view override vaultExists(_vaultId) returns (address token) {
         token = Vault(vaultIdToVault[_vaultId]).tokenAddress();
     }
 }
