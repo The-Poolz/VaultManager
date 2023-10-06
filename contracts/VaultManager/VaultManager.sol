@@ -124,7 +124,7 @@ contract VaultManager is
         uint96 _feeNumerator
     ) external onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
-        setVaultRoyalty(
+        _setVaultRoyalty(
             vaultId,
             _tokenAddress,
             _royaltyReceiver,
@@ -140,7 +140,7 @@ contract VaultManager is
     ) external onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
-        setVaultRoyalty(
+        _setVaultRoyalty(
             vaultId,
             _tokenAddress,
             _royaltyReceiver,
@@ -154,7 +154,7 @@ contract VaultManager is
     /// @param _feeNumerator 100 points = 1% of the sale price will be sent to the receiver
     /// @param _feeNumerator 500 points = 5% of the sale price will be sent to the receiver
     /// @param _feeNumerator 1000 points = 10% of the sale price will be sent to the receiver
-    function setVaultRoyalty(
+    function _setVaultRoyalty(
         uint _vaultId,
         address _tokenAddress,
         address _royaltyReceiver,
