@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract VaultManagerEvents {
+interface VaultManagerEvents {
     event NewVaultCreated(uint indexed vaultId, address indexed tokenAddress);
     event VaultDeleted(uint indexed vaultId, address indexed tokenAddress);
     event Deposited(

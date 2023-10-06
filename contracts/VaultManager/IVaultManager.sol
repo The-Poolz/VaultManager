@@ -7,6 +7,13 @@ interface IVaultManager {
         uint _amount
     ) external returns (uint vaultId);
 
+    function safeDeposit(
+        address _tokenAddress,
+        uint _amount,
+        address _from,
+        bytes memory _signature
+    ) external returns (uint vaultId);
+
     function withdrawByVaultId(
         uint _vaultId,
         address to,

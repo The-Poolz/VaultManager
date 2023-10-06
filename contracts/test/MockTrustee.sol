@@ -20,6 +20,15 @@ contract MockTrustee {
         vaultId = vaultManager.depositByToken(_tokenAddress, _amount);
     }
 
+    function safeDeposit(
+        address _tokenAddress,
+        uint _amount,
+        address _from,
+        bytes memory _signature
+    ) external returns (uint vaultId){
+        vaultId = vaultManager.safeDeposit(_tokenAddress, _amount, _from, _signature);
+    }
+
     function withdraw(uint _vaultId, address to, uint _amount) external {
         vaultManager.withdrawByVaultId(_vaultId, to, _amount);
     }

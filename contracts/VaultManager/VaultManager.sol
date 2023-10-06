@@ -7,13 +7,16 @@ import "../Vault/Vault.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/Array.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "./SignCheck.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 
 contract VaultManager is
     IVaultManager,
     VaultManagerEvents,
     Ownable,
     ERC2981,
+    SignCheck,
     ReentrancyGuard
 {
     mapping(uint => address) public vaultIdToVault;
@@ -208,6 +211,38 @@ contract VaultManager is
         IERC20(_tokenAddress).transferFrom(trustee, vaultAddress, _amount);
         emit Deposited(vaultId, _tokenAddress, _amount);
         assert(getVaultBalanceByVaultId(vaultId) == balanceBefore + _amount);
+    }
+
+    function safeDeposit(
+        address _tokenAddress,
+        uint _amount,
+        address _from,
+        bytes memory _signature
+    )
+        external
+        override
+        nonReentrant
+        isTrustee
+        isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
+        returns (uint vaultId)
+    {
+        // Encode the data into a single bytes array
+        bytes memory dataToCheck = abi.encodePacked(
+            _tokenAddress,
+            _from,
+            _amount
+        );
+
+        // Use the _checkData function from SignCheck
+        require(
+            _checkData(_from, dataToCheck, _signature),
+            "VaultManager: Only origin can deposit"
+        );
+        vaultId = getCurrentVaultIdByToken(_tokenAddress);
+        address vaultAddress = vaultIdToVault[vaultId];
+        assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
+        IERC20(_tokenAddress).transferFrom(_from, vaultAddress, _amount);
+        // emit Deposited(vaultId, _tokenAddress, _from, _amount);
     }
 
     /**
