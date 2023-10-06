@@ -44,8 +44,19 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         bool _depositStatus,
         bool _withdrawStatus
     ) external onlyOwner vaultExists(_vaultId) {
-        isDepositActiveForVaultId[_vaultId] = _depositStatus;
-        isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
+        bool isDepositChanged = isDepositActiveForVaultId[_vaultId] != _depositStatus;
+        bool isWithdrawalChanged = isWithdrawalActiveForVaultId[_vaultId] != _withdrawStatus;
+        require(
+            isDepositChanged || isWithdrawalChanged,
+            "VaultManager: No Change"
+        );
+        if (isDepositChanged) {
+            isDepositActiveForVaultId[_vaultId] = _depositStatus;
+        }
+        if (isWithdrawalChanged) {
+            isWithdrawalActiveForVaultId[_vaultId] = _withdrawStatus;
+        }
+        emit VaultStatusUpdate(_vaultId, _depositStatus, _withdrawStatus);
     }
 
     function createNewVault(

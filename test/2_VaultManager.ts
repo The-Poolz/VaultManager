@@ -83,6 +83,20 @@ describe("VaultManager", function () {
     expect(royaltyAmount).to.equal(0);
   });
 
+  it("should set deposit and withdraw status vault to true", async () => {
+    const vaultId = await vaultManager.callStatic["createNewVault(address)"](
+      token.address
+    );
+    await vaultManager["createNewVault(address)"](token.address);
+    
+    const tx = await vaultManager.setActiveStatusForVaultId(vaultId, false, false);
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+    expect(isDepositActive).to.equal(false);
+    expect(isWithdrawActive).to.equal(false);
+    await expect(tx).to.emit(vaultManager, 'VaultStatusUpdate').withArgs(vaultId, false, false);
+  })
+
   it("should set trade start time by vault ID", async () => {
     const vaultId = await vaultManager.callStatic["createNewVault(address)"](
       token.address

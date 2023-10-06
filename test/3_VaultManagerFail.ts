@@ -202,8 +202,22 @@ describe("Vault Manager Fail", function () {
       await expect(vaultManager.setTradeStartTime(vaultId, now)).to.be.revertedWith(
         "VaultManager: Invalid trade start time"
       );
-      
     })
+
+    it("should fail to set active status when both status same as current", async () => {
+      const vaultId = await vaultManager.callStatic["createNewVault(address)"](
+        token.address
+      );
+      await vaultManager["createNewVault(address)"](token.address);
+
+      const currentDeposiStatus = await vaultManager.isDepositActiveForVaultId(vaultId);
+      const currentWithdrawStatus = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+
+      await expect(
+        vaultManager.setActiveStatusForVaultId(vaultId, currentDeposiStatus, currentWithdrawStatus)
+      ).to.be.revertedWith("VaultManager: No Change");
+    })
+
   });
 
   describe("Vault does not Exists", function () {
