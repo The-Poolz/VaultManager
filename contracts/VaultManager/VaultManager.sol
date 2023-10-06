@@ -16,7 +16,7 @@ contract VaultManager is
     VaultManagerEvents,
     Ownable,
     ERC2981,
-    SignCheck
+    SignCheck,
     ReentrancyGuard
 {
     mapping(uint => address) public vaultIdToVault;
