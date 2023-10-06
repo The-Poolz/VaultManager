@@ -7,7 +7,7 @@ interface IVaultManager {
         uint _amount
     ) external returns (uint vaultId);
 
-    function safeDeposit (
+    function safeDeposit(
         address _tokenAddress,
         uint _amount,
         address _from,

@@ -298,7 +298,6 @@ describe("Vault Manager Fail", function () {
       await vaultManager["createNewVault(address)"](token.address);
     });
 
-    
     it("should fail to deposit when called by non trustee", async () => {
       const amount = 100;
       await token.approve(trustee.address, amount);

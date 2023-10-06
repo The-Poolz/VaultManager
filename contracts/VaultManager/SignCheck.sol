@@ -13,12 +13,11 @@ abstract contract SignCheck {
         bytes memory _signature
     ) internal returns (bool success) {
         uint currentNonce = nonces[from];
-        bytes32 hash = keccak256(abi.encodePacked(_data, currentNonce)).toEthSignedMessageHash();
+        bytes32 hash = keccak256(abi.encodePacked(_data, currentNonce))
+            .toEthSignedMessageHash();
         address signer = hash.recover(_signature);
-
         // Increment the nonce after verification
         nonces[from] = currentNonce + 1;
-
         success = signer == from;
     }
 }
