@@ -316,7 +316,7 @@ describe("Vault Manager Fail", function () {
 
     it("should fail to safe deposit when called by non trustee", async () => {
       const currentNonce = await vaultManager.nonces(depositor.getAddress());
-      const hashToSign = getDepositeHashToSign(token.address, await depositor.getAddress(), 100, currentNonce);
+      const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
       const signature = await depositor.signMessage(hashToSign);
       await expect(
         vaultManager
@@ -327,7 +327,7 @@ describe("Vault Manager Fail", function () {
 
     it("should fail to safe deposit when tx.origin signs wrong fromAddress", async () => {
         const currentNonce = await vaultManager.nonces(depositor.getAddress());
-        const hashToSign = getDepositeHashToSign(token.address, await depositor.getAddress(), 100, currentNonce);
+        const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
         const signature = await nonPermitted.signMessage(hashToSign);
         const tx = trustee.connect(nonPermitted).safeDeposit(token.address, 100, depositor.getAddress(), signature);
         await expect(tx).to.be.revertedWith("VaultManager: Only origin can deposit");
@@ -335,7 +335,7 @@ describe("Vault Manager Fail", function () {
 
     it("should fail to safe deposit when incorrect amount is signed", async () => {
         const currentNonce = await vaultManager.nonces(depositor.getAddress());
-        const hashToSign = getDepositeHashToSign(token.address, await depositor.getAddress(), 100, currentNonce);
+        const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
         const signature = await depositor.signMessage(hashToSign);
         const tx = trustee.connect(depositor).safeDeposit(token.address, 1000, depositor.getAddress(), signature);
         await expect(tx).to.be.revertedWith("VaultManager: Only origin can deposit");
@@ -389,7 +389,7 @@ describe("Vault Manager Fail", function () {
 
     it("should fail to safe deposit when deposits are frozen", async () => {
       const currentNonce = await vaultManager.nonces(governor.getAddress());
-      const hashToSign = getDepositeHashToSign(token.address, await governor.getAddress(), 100, currentNonce);
+      const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
       const signature = await governor.signMessage(hashToSign);
       await expect(
         trustee.safeDeposit(token.address, 100, governor.getAddress(), signature)

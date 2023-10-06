@@ -3,14 +3,12 @@ import { ethers } from "hardhat";
 
 export const getDepositeHashToSign = (
   tokenAddress: string,
-  fromAddress: string,
   amount: BigNumber | number,
   nonce: BigNumber
 ) => {
-  const types = ["address", "address", "uint256", "uint256"];
+  const types = ["address", "uint256", "uint256"];
   const values = [
     tokenAddress,
-    fromAddress,
     amount.toString(),
     nonce.toString(),
   ];

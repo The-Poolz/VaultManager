@@ -9,6 +9,12 @@ interface VaultManagerEvents {
         address indexed tokenAddress,
         uint amount
     );
+    event SafeDeposited(
+        uint indexed vaultId,
+        address indexed tokenAddress,
+        address indexed from,
+        uint amount
+    );
     event Withdrawn(
         uint indexed vaultId,
         address indexed tokenAddress,
