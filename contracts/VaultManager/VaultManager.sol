@@ -241,7 +241,7 @@ contract VaultManager is
         address vaultAddress = vaultIdToVault[vaultId];
         assert(_tokenAddress == Vault(vaultAddress).tokenAddress());
         IERC20(_tokenAddress).transferFrom(_from, vaultAddress, _amount);
-        emit SafeDeposited(vaultId, _tokenAddress, _from,  _amount);
+        emit Deposited(vaultId, _tokenAddress,  _amount);
     }
 
     /**

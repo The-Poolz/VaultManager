@@ -150,7 +150,7 @@ describe("VaultManager", function () {
     const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
     expect(vaultBalance).to.equal(amount);
     expect(vaultBalanceByToken).to.equal(amount);
-    await expect(tx).to.emit(vaultManager, 'SafeDeposited').withArgs(vaultId, token.address, await owner.getAddress(), amount);
+    await expect(tx).to.emit(vaultManager, 'Deposited').withArgs(vaultId, token.address, amount);
   });
 
   it("should withdraw tokens from a vault", async function () {
