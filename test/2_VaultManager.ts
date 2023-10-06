@@ -122,13 +122,14 @@ describe("VaultManager", function () {
     await vaultManager["createNewVault(address)"](token.address);
 
     await token.approve(trustee.address, amount);
-    await trustee.deposit(token.address, amount);
+    const tx = await trustee.deposit(token.address, amount);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     const vaultBalanceByToken =
       await vaultManager.getCurrentVaultBalanceByToken(token.address);
     expect(vaultBalance).to.equal(amount);
     expect(vaultBalanceByToken).to.equal(amount);
+    await expect(tx).to.emit(vaultManager, "Deposited").withArgs(vaultId, token.address, amount);
   });
 
   it('should safe deposit tokens to a vault using sender signature', async function () {
@@ -140,15 +141,16 @@ describe("VaultManager", function () {
     await vaultManager['createNewVault(address)'](token.address);
 
     const currentNonce = await vaultManager.nonces(owner.getAddress());
-    const hashToSign = getDepositeHashToSign(token.address, await owner.getAddress(), amount, currentNonce);
+    const hashToSign = getDepositeHashToSign(token.address, amount, currentNonce);
     const signature = await owner.signMessage(hashToSign);
 
-    await trustee.connect(owner).safeDeposit(token.address, amount, owner.getAddress(), signature);
+    const tx = await trustee.connect(owner).safeDeposit(token.address, amount, owner.getAddress(), signature);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
     expect(vaultBalance).to.equal(amount);
     expect(vaultBalanceByToken).to.equal(amount);
+    await expect(tx).to.emit(vaultManager, 'Deposited').withArgs(vaultId, token.address, amount);
   });
 
   it("should withdraw tokens from a vault", async function () {
