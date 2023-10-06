@@ -16,7 +16,6 @@ abstract contract SignCheck {
         bytes32 hash = keccak256(abi.encodePacked(_data, currentNonce))
             .toEthSignedMessageHash();
         address signer = hash.recover(_signature);
-        // Increment the nonce after verification
         nonces[from] = currentNonce + 1;
         success = signer == from;
     }
