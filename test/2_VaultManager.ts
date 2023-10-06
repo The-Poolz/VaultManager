@@ -4,6 +4,7 @@ import { ERC20Token } from "../typechain-types/poolz-helper-v2/contracts/token";
 import { expect } from "chai";
 import { BigNumber, Signer } from "ethers";
 import { ethers } from "hardhat";
+import { getDepositeHashToSign } from "./utils";
 
 describe("VaultManager", function () {
   let vaultManager: VaultManager;
@@ -126,6 +127,26 @@ describe("VaultManager", function () {
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
     const vaultBalanceByToken =
       await vaultManager.getCurrentVaultBalanceByToken(token.address);
+    expect(vaultBalance).to.equal(amount);
+    expect(vaultBalanceByToken).to.equal(amount);
+  });
+
+  it('should safe deposit tokens to a vault using sender signature', async function () {
+    await vaultManager.setTrustee(trustee.address);
+    const amount = ethers.utils.parseEther('0.000001');
+    await token.approve(vaultManager.address, amount);
+
+    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
+    await vaultManager['createNewVault(address)'](token.address);
+
+    const currentNonce = await vaultManager.nonces(owner.getAddress());
+    const hashToSign = getDepositeHashToSign(token.address, await owner.getAddress(), amount, currentNonce);
+    const signature = await owner.signMessage(hashToSign);
+
+    await trustee.connect(owner).safeDeposit(token.address, amount, owner.getAddress(), signature);
+
+    const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
+    const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
     expect(vaultBalance).to.equal(amount);
     expect(vaultBalanceByToken).to.equal(amount);
   });
