@@ -21,6 +21,11 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         uint _vaultId,
         uint _tradeStartTime
     ) public onlyOwner vaultExists(_vaultId) {
+        require( 
+            _tradeStartTime == 0 ||
+            _tradeStartTime > block.timestamp,
+            "VaultManager: Invalid trade start time"
+        );
         vaultIdToTradeStartTime[_vaultId] = _tradeStartTime;
     }
 
