@@ -1,11 +1,11 @@
 import { MockTrustee } from "../typechain-types";
 import { VaultManager } from "../typechain-types/contracts/VaultManager";
 import { ERC20Token } from "../typechain-types/poolz-helper-v2/contracts/token";
+import { getDepositeHashToSign } from "./utils";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
-import { getDepositeHashToSign } from "./utils";
-import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 describe("Vault Manager Fail", function () {
   describe("OnlyGovernor Functions", function () {
@@ -193,16 +193,16 @@ describe("Vault Manager Fail", function () {
       );
       await vaultManager["createNewVault(address)"](token.address);
 
-      await expect(vaultManager.setTradeStartTime(vaultId, 1)).to.be.revertedWith(
-        "VaultManager: Invalid trade start time"
-      );
+      await expect(
+        vaultManager.setTradeStartTime(vaultId, 1)
+      ).to.be.revertedWith("VaultManager: Invalid trade start time");
 
-      const now = await time.latest()
+      const now = await time.latest();
 
-      await expect(vaultManager.setTradeStartTime(vaultId, now)).to.be.revertedWith(
-        "VaultManager: Invalid trade start time"
-      );
-    })
+      await expect(
+        vaultManager.setTradeStartTime(vaultId, now)
+      ).to.be.revertedWith("VaultManager: Invalid trade start time");
+    });
 
     it("should fail to set active status when both status same as current", async () => {
       const vaultId = await vaultManager.callStatic["createNewVault(address)"](
@@ -210,14 +210,20 @@ describe("Vault Manager Fail", function () {
       );
       await vaultManager["createNewVault(address)"](token.address);
 
-      const currentDeposiStatus = await vaultManager.isDepositActiveForVaultId(vaultId);
-      const currentWithdrawStatus = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+      const currentDeposiStatus = await vaultManager.isDepositActiveForVaultId(
+        vaultId
+      );
+      const currentWithdrawStatus =
+        await vaultManager.isWithdrawalActiveForVaultId(vaultId);
 
       await expect(
-        vaultManager.setActiveStatusForVaultId(vaultId, currentDeposiStatus, currentWithdrawStatus)
+        vaultManager.setActiveStatusForVaultId(
+          vaultId,
+          currentDeposiStatus,
+          currentWithdrawStatus
+        )
       ).to.be.revertedWith("VaultManager: No Change");
-    })
-
+    });
   });
 
   describe("Vault does not Exists", function () {
@@ -258,6 +264,32 @@ describe("Vault Manager Fail", function () {
       await expect(trustee.deposit(token.address, amount)).to.be.revertedWith(
         "VaultManager: No vaults for this token"
       );
+    });
+
+    it("should fail if there are no vaults for the token", async () => {
+      const from = 0;
+      const count = 5;
+      await expect(
+        vaultManager.getAllVaultBalanceByToken(token.address, from, count)
+      ).to.be.revertedWith("VaultManager: No vaults for this token");
+    });
+
+    it("should fail if count is not greater than 0", async () => {
+      const from = 0;
+      const count = 0;
+      await vaultManager["createNewVault(address)"](token.address);
+      await expect(
+        vaultManager.getAllVaultBalanceByToken(token.address, from, count)
+      ).to.be.revertedWith("VaultManager: Count must be greater than 0");
+    });
+
+    it("should fail if the range is invalid", async () => {
+      const from = 0;
+      const count = 2; // Assuming there are only 1 vaults for this token
+      await vaultManager["createNewVault(address)"](token.address);
+      await expect(
+        vaultManager.getAllVaultBalanceByToken(token.address, from, count)
+      ).to.be.revertedWith("VaultManager: Invalid range");
     });
 
     it("should fail to withdraw", async () => {
@@ -305,7 +337,7 @@ describe("Vault Manager Fail", function () {
     let token: ERC20Token;
     let nonPermitted: Signer;
     let vaultId: string;
-    let depositor: Signer
+    let depositor: Signer;
 
     beforeEach(async function () {
       const Token = await ethers.getContractFactory("ERC20Token");
@@ -349,7 +381,11 @@ describe("Vault Manager Fail", function () {
 
     it("should fail to safe deposit when called by non trustee", async () => {
       const currentNonce = await vaultManager.nonces(depositor.getAddress());
-      const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
+      const hashToSign = getDepositeHashToSign(
+        token.address,
+        100,
+        currentNonce
+      );
       const signature = await depositor.signMessage(hashToSign);
       await expect(
         vaultManager
@@ -359,19 +395,35 @@ describe("Vault Manager Fail", function () {
     });
 
     it("should fail to safe deposit when tx.origin signs wrong fromAddress", async () => {
-        const currentNonce = await vaultManager.nonces(depositor.getAddress());
-        const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
-        const signature = await nonPermitted.signMessage(hashToSign);
-        const tx = trustee.connect(nonPermitted).safeDeposit(token.address, 100, depositor.getAddress(), signature);
-        await expect(tx).to.be.revertedWith("VaultManager: Only origin can deposit");
+      const currentNonce = await vaultManager.nonces(depositor.getAddress());
+      const hashToSign = getDepositeHashToSign(
+        token.address,
+        100,
+        currentNonce
+      );
+      const signature = await nonPermitted.signMessage(hashToSign);
+      const tx = trustee
+        .connect(nonPermitted)
+        .safeDeposit(token.address, 100, depositor.getAddress(), signature);
+      await expect(tx).to.be.revertedWith(
+        "VaultManager: Only origin can deposit"
+      );
     });
 
     it("should fail to safe deposit when incorrect amount is signed", async () => {
-        const currentNonce = await vaultManager.nonces(depositor.getAddress());
-        const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
-        const signature = await depositor.signMessage(hashToSign);
-        const tx = trustee.connect(depositor).safeDeposit(token.address, 1000, depositor.getAddress(), signature);
-        await expect(tx).to.be.revertedWith("VaultManager: Only origin can deposit");
+      const currentNonce = await vaultManager.nonces(depositor.getAddress());
+      const hashToSign = getDepositeHashToSign(
+        token.address,
+        100,
+        currentNonce
+      );
+      const signature = await depositor.signMessage(hashToSign);
+      const tx = trustee
+        .connect(depositor)
+        .safeDeposit(token.address, 1000, depositor.getAddress(), signature);
+      await expect(tx).to.be.revertedWith(
+        "VaultManager: Only origin can deposit"
+      );
     });
   });
 
@@ -422,12 +474,20 @@ describe("Vault Manager Fail", function () {
 
     it("should fail to safe deposit when deposits are frozen", async () => {
       const currentNonce = await vaultManager.nonces(governor.getAddress());
-      const hashToSign = getDepositeHashToSign(token.address, 100, currentNonce);
+      const hashToSign = getDepositeHashToSign(
+        token.address,
+        100,
+        currentNonce
+      );
       const signature = await governor.signMessage(hashToSign);
       await expect(
-        trustee.safeDeposit(token.address, 100, governor.getAddress(), signature)
+        trustee.safeDeposit(
+          token.address,
+          100,
+          governor.getAddress(),
+          signature
+        )
       ).to.be.revertedWith("VaultManager: Deposits are frozen");
     });
-
   });
 });

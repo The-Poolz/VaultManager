@@ -1,10 +1,10 @@
 import { VaultManager } from "../typechain-types/contracts/VaultManager";
 import { MockTrustee } from "../typechain-types/contracts/test";
 import { ERC20Token } from "../typechain-types/poolz-helper-v2/contracts/token";
+import { getDepositeHashToSign } from "./utils";
 import { expect } from "chai";
 import { BigNumber, Signer } from "ethers";
 import { ethers } from "hardhat";
-import { getDepositeHashToSign } from "./utils";
 
 describe("VaultManager", function () {
   let vaultManager: VaultManager;
@@ -88,14 +88,24 @@ describe("VaultManager", function () {
       token.address
     );
     await vaultManager["createNewVault(address)"](token.address);
-    
-    const tx = await vaultManager.setActiveStatusForVaultId(vaultId, false, false);
-    const isDepositActive = await vaultManager.isDepositActiveForVaultId(vaultId);
-    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+
+    const tx = await vaultManager.setActiveStatusForVaultId(
+      vaultId,
+      false,
+      false
+    );
+    const isDepositActive = await vaultManager.isDepositActiveForVaultId(
+      vaultId
+    );
+    const isWithdrawActive = await vaultManager.isWithdrawalActiveForVaultId(
+      vaultId
+    );
     expect(isDepositActive).to.equal(false);
     expect(isWithdrawActive).to.equal(false);
-    await expect(tx).to.emit(vaultManager, 'VaultStatusUpdate').withArgs(vaultId, false, false);
-  })
+    await expect(tx)
+      .to.emit(vaultManager, "VaultStatusUpdate")
+      .withArgs(vaultId, false, false);
+  });
 
   it("should set trade start time by vault ID", async () => {
     const vaultId = await vaultManager.callStatic["createNewVault(address)"](
@@ -143,28 +153,41 @@ describe("VaultManager", function () {
       await vaultManager.getCurrentVaultBalanceByToken(token.address);
     expect(vaultBalance).to.equal(amount);
     expect(vaultBalanceByToken).to.equal(amount);
-    await expect(tx).to.emit(vaultManager, "Deposited").withArgs(vaultId, token.address, amount);
+    await expect(tx)
+      .to.emit(vaultManager, "Deposited")
+      .withArgs(vaultId, token.address, amount);
   });
 
-  it('should safe deposit tokens to a vault using sender signature', async function () {
+  it("should safe deposit tokens to a vault using sender signature", async function () {
     await vaultManager.setTrustee(trustee.address);
-    const amount = ethers.utils.parseEther('0.000001');
+    const amount = ethers.utils.parseEther("0.000001");
     await token.approve(vaultManager.address, amount);
 
-    const vaultId = await vaultManager.callStatic['createNewVault(address)'](token.address);
-    await vaultManager['createNewVault(address)'](token.address);
+    const vaultId = await vaultManager.callStatic["createNewVault(address)"](
+      token.address
+    );
+    await vaultManager["createNewVault(address)"](token.address);
 
     const currentNonce = await vaultManager.nonces(owner.getAddress());
-    const hashToSign = getDepositeHashToSign(token.address, amount, currentNonce);
+    const hashToSign = getDepositeHashToSign(
+      token.address,
+      amount,
+      currentNonce
+    );
     const signature = await owner.signMessage(hashToSign);
 
-    const tx = await trustee.connect(owner).safeDeposit(token.address, amount, owner.getAddress(), signature);
+    const tx = await trustee
+      .connect(owner)
+      .safeDeposit(token.address, amount, owner.getAddress(), signature);
 
     const vaultBalance = await vaultManager.getVaultBalanceByVaultId(vaultId);
-    const vaultBalanceByToken = await vaultManager.getCurrentVaultBalanceByToken(token.address);
+    const vaultBalanceByToken =
+      await vaultManager.getCurrentVaultBalanceByToken(token.address);
     expect(vaultBalance).to.equal(amount);
     expect(vaultBalanceByToken).to.equal(amount);
-    await expect(tx).to.emit(vaultManager, 'Deposited').withArgs(vaultId, token.address, amount);
+    await expect(tx)
+      .to.emit(vaultManager, "Deposited")
+      .withArgs(vaultId, token.address, amount);
   });
 
   it("should withdraw tokens from a vault", async function () {
@@ -202,8 +225,8 @@ describe("VaultManager", function () {
       .approve(vaultManager.address, ethers.constants.MaxUint256);
 
     const amounts: BigNumber[] = [];
-
-    for (let i = 0; i < 10; i++) {
+    const count = 10;
+    for (let i = 0; i < count; i++) {
       await vaultManager
         .connect(owner)
         ["createNewVault(address)"](token.address);
@@ -220,7 +243,9 @@ describe("VaultManager", function () {
       const vaultBalanceByToken =
         await vaultManager.getCurrentVaultBalanceByToken(token.address);
       const totalBalance = await vaultManager.getAllVaultBalanceByToken(
-        token.address
+        token.address,
+        0,
+        i + 1
       );
       const totalVaults = await vaultManager.totalVaults();
       expect(totalVaults).to.equal(i + 1);
