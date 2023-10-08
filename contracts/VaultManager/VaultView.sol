@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "../Vault/Vault.sol";
 import "./VaultState.sol";
 import "./IVaultManager.sol";
-import "hardhat/console.sol";
 
 abstract contract VaultView is VaultState, IVaultManager {
     function getVaultBalanceByVaultId(
