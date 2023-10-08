@@ -21,4 +21,9 @@ interface VaultManagerEvents {
         address indexed receiver,
         uint96 indexed feeNumerator
     );
+    event VaultStatusUpdate (
+        uint indexed vaultId,
+        bool indexed depositStatus,
+        bool indexed withdrawStatus
+    );
 }

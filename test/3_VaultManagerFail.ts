@@ -5,6 +5,7 @@ import { expect } from "chai";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
 import { getDepositeHashToSign } from "./utils";
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 describe("Vault Manager Fail", function () {
   describe("OnlyGovernor Functions", function () {
@@ -185,6 +186,38 @@ describe("Vault Manager Fail", function () {
         "VaultManager: Vault not found"
       );
     });
+
+    it("should fail to set tradeStartTime when incorrect time is passed", async () => {
+      const vaultId = await vaultManager.callStatic["createNewVault(address)"](
+        token.address
+      );
+      await vaultManager["createNewVault(address)"](token.address);
+
+      await expect(vaultManager.setTradeStartTime(vaultId, 1)).to.be.revertedWith(
+        "VaultManager: Invalid trade start time"
+      );
+
+      const now = await time.latest()
+
+      await expect(vaultManager.setTradeStartTime(vaultId, now)).to.be.revertedWith(
+        "VaultManager: Invalid trade start time"
+      );
+    })
+
+    it("should fail to set active status when both status same as current", async () => {
+      const vaultId = await vaultManager.callStatic["createNewVault(address)"](
+        token.address
+      );
+      await vaultManager["createNewVault(address)"](token.address);
+
+      const currentDeposiStatus = await vaultManager.isDepositActiveForVaultId(vaultId);
+      const currentWithdrawStatus = await vaultManager.isWithdrawalActiveForVaultId(vaultId);
+
+      await expect(
+        vaultManager.setActiveStatusForVaultId(vaultId, currentDeposiStatus, currentWithdrawStatus)
+      ).to.be.revertedWith("VaultManager: No Change");
+    })
+
   });
 
   describe("Vault does not Exists", function () {
