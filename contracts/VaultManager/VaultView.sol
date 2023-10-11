@@ -26,10 +26,10 @@ abstract contract VaultView is VaultState, IVaultManager {
         uint count
     ) external view returns (uint balance) {
         uint[] memory vaultIds = tokenToVaultIds[_tokenAddress];
-        uint totalVaults = vaultIds.length;
-        require(totalVaults > 0, "VaultManager: No vaults for this token");
+        uint totalVaultsOfToken = vaultIds.length;
+        require(totalVaultsOfToken > 0, "VaultManager: No vaults for this token");
         require(count > 0, "VaultManager: Count must be greater than 0");
-        require(from + count <= totalVaults, "VaultManager: Invalid range");
+        require(from + count <= totalVaultsOfToken, "VaultManager: Invalid range");
         for (uint i = from; i < from + count; i++) {
             balance += Vault(vaultIdToVault[vaultIds[i]]).tokenBalance();
         }
