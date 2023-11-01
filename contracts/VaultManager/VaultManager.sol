@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./SignCheck.sol";
-import "./VaultControl.sol";
+import "./VaultControl.sol"; 
+import {SphereXProtected} from "@spherex-xyz/contracts/src/SphereXProtected.sol";
+ 
 
 contract VaultManager is
     VaultControl,
@@ -23,7 +25,7 @@ contract VaultManager is
         nonReentrant
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
-        returns (uint vaultId)
+        sphereXGuardExternal(0xd411f8e2) returns (uint vaultId)
     {
         vaultId = _deposit(_tokenAddress, _amount, trustee);
     }
@@ -39,7 +41,7 @@ contract VaultManager is
         nonReentrant
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
-        returns (uint vaultId)
+        sphereXGuardExternal(0x2ac19d62) returns (uint vaultId)
     {
         bytes memory dataToCheck = abi.encodePacked(_tokenAddress, _amount);
         require(
@@ -53,7 +55,7 @@ contract VaultManager is
         address _tokenAddress,
         uint _amount,
         address _depositFrom
-    ) private returns (uint vaultId) {
+    ) private sphereXGuardInternal(0xaadbc972) returns (uint vaultId) {
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         uint balanceBefore = getVaultBalanceByVaultId(vaultId);
         address vaultAddress = vaultIdToVault[vaultId];
@@ -78,7 +80,7 @@ contract VaultManager is
         nonReentrant
         vaultExists(_vaultId)
         isWithdrawalActive(_vaultId)
-    {
+    sphereXGuardExternal(0x063de67a) {
         uint balanceBefore = getVaultBalanceByVaultId(_vaultId);
         Vault vault = Vault(vaultIdToVault[_vaultId]);
         vault.withdraw(_to, _amount);
