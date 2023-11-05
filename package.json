@@ -40,9 +40,10 @@
     "typescript": "^4.9.3"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
     "@spherex-xyz/contracts": "^1.0.6",
     "@spherex-xyz/openzeppelin-solidity": "^0.0.4",
-    "@spherex-xyz/poolz-helper-v2": "^0.0.2",
+    "@spherex-xyz/poolz-helper-v2": "^0.0.3",
     "hardhat-preprocessor": "^0.1.5"
   }
 }
