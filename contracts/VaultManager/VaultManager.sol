@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@spherex-xyz/openzeppelin-solidity/contracts/security/ReentrancyGuard.sol";
 import "./SignCheck.sol";
 import "./VaultControl.sol"; 
 import {SphereXProtected} from "@spherex-xyz/contracts/src/SphereXProtected.sol";

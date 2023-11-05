@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@spherex-xyz/openzeppelin-solidity/contracts/access/Ownable.sol";
+import "@spherex-xyz/openzeppelin-solidity/contracts/token/common/ERC2981.sol";
 import "./VaultManagerEvents.sol";
 import "./VaultView.sol"; 
 import {SphereXProtected} from "@spherex-xyz/contracts/src/SphereXProtected.sol";

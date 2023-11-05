@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol"; 
+import "@spherex-xyz/openzeppelin-solidity/contracts/utils/cryptography/ECDSA.sol"; 
 import {SphereXProtected} from "@spherex-xyz/contracts/src/SphereXProtected.sol";
  
 

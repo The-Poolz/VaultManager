@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IVault.sol";
-import "@poolzfinance/poolz-helper-v2/contracts/ERC20Helper.sol"; 
+import "@spherex-xyz/poolz-helper-v2/contracts/ERC20Helper.sol"; 
 import {SphereXProtected} from "@spherex-xyz/contracts/src/SphereXProtected.sol";
  
 
