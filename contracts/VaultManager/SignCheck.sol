@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@spherex-xyz/openzeppelin-solidity/contracts/utils/cryptography/ECDSA.sol"; 
+import {SphereXProtected} from "@spherex-xyz/contracts/src/SphereXProtected.sol";
+ 
 
-abstract contract SignCheck {
+abstract contract SignCheck is SphereXProtected {
     using ECDSA for bytes32;
     mapping(address => uint) public nonces;
 
@@ -11,7 +13,7 @@ abstract contract SignCheck {
         address from,
         bytes memory _data,
         bytes memory _signature
-    ) internal returns (bool success) {
+    ) internal sphereXGuardInternal(0x302e3fb8) returns (bool success) {
         uint currentNonce = nonces[from];
         bytes32 hash = keccak256(abi.encodePacked(_data, currentNonce))
             .toEthSignedMessageHash();

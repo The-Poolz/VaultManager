@@ -3,6 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@truffle/dashboard-hardhat-plugin";
 import 'solidity-coverage'
 
+
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.18",

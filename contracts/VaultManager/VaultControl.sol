@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@spherex-xyz/openzeppelin-solidity/contracts/access/Ownable.sol";
+import "@spherex-xyz/openzeppelin-solidity/contracts/token/common/ERC2981.sol";
 import "./VaultManagerEvents.sol";
-import "./VaultView.sol";
+import "./VaultView.sol"; 
+import {SphereXProtected} from "@spherex-xyz/contracts/src/SphereXProtected.sol";
+ 
 
-abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC2981 {
+abstract contract VaultControl is SphereXProtected, VaultView, VaultManagerEvents, Ownable, ERC2981 {
     /**
      * @dev will be used only once to set the trustee address initially.
      */
     function setTrustee(
         address _address
-    ) external onlyOwner notZeroAddress(_address) notEOA(_address) {
+    ) external onlyOwner notZeroAddress(_address) notEOA(_address) sphereXGuardExternal(0x4c72efed) {
         require(trustee == address(0), "VaultManager: Trustee already set");
         trustee = _address;
     }
@@ -20,7 +22,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
     function setTradeStartTime(
         uint _vaultId,
         uint _tradeStartTime
-    ) public onlyOwner vaultExists(_vaultId) {
+    ) public onlyOwner vaultExists(_vaultId) sphereXGuardPublic(0xff5b243b, 0x44334e29) {
         require( 
             _tradeStartTime == 0 ||
             _tradeStartTime > block.timestamp,
@@ -34,7 +36,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
      */
     function updateTrustee(
         address _address
-    ) external onlyOwner notZeroAddress(_address) notEOA(_address) {
+    ) external onlyOwner notZeroAddress(_address) notEOA(_address) sphereXGuardExternal(0x0e392b75) {
         require(trustee != address(0), "VaultManager: Trustee not set yet");
         trustee = _address;
     }
@@ -43,7 +45,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         uint _vaultId,
         bool _depositStatus,
         bool _withdrawStatus
-    ) external onlyOwner vaultExists(_vaultId) {
+    ) external onlyOwner vaultExists(_vaultId) sphereXGuardExternal(0x561abc7e) {
         bool isDepositChanged = isDepositActiveForVaultId[_vaultId] != _depositStatus;
         bool isWithdrawalChanged = isWithdrawalActiveForVaultId[_vaultId] != _withdrawStatus;
         require(
@@ -61,14 +63,14 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
 
     function createNewVault(
         address _tokenAddress
-    ) external onlyOwner returns (uint vaultId) {
+    ) external onlyOwner sphereXGuardExternal(0x7d670cca) returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
     }
 
     function createNewVault(
         address _tokenAddress,
         uint _tradeStartTime
-    ) external onlyOwner returns (uint vaultId) {
+    ) external onlyOwner sphereXGuardExternal(0xdcdb1d82) returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
     }
@@ -77,7 +79,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         address _tokenAddress,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) external onlyOwner returns (uint vaultId) {
+    ) external onlyOwner sphereXGuardExternal(0xcc0082bd) returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         _setVaultRoyalty(
             vaultId,
@@ -92,7 +94,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         uint _tradeStartTime,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) external onlyOwner returns (uint vaultId) {
+    ) external onlyOwner sphereXGuardExternal(0x621f0e3e) returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
         _setVaultRoyalty(
@@ -114,7 +116,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         address _tokenAddress,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) private notZeroAddress(_royaltyReceiver) {
+    ) private notZeroAddress(_royaltyReceiver) sphereXGuardInternal(0xf1c98a1a) {
         require(
             _feeNumerator <= _feeDenominator(),
             "VaultManager: Royalty cannot be more than 100%"
@@ -130,7 +132,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
 
     function _createNewVault(
         address _tokenAddress
-    ) private notZeroAddress(_tokenAddress) returns (uint vaultId) {
+    ) private notZeroAddress(_tokenAddress) sphereXGuardInternal(0x6667d688) returns (uint vaultId) {
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);

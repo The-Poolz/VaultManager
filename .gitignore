@@ -9,3 +9,6 @@ typechain-types
 cache
 artifacts
 
+# Spherex
+code_id_mapping.json
+inheritance_code.md
