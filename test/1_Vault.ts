@@ -14,11 +14,12 @@ describe('Vault', function () {
     token = await Token.deploy("Token", "TKN");
     await token.deployed();
 
+    signers= await ethers.getSigners();
+
     const Vault = await ethers.getContractFactory('Vault');
-    vault = await Vault.deploy(token.address);
+    vault = await Vault.deploy(token.address, signers[0].address, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
     await vault.deployed();
 
-    signers= await ethers.getSigners();
   });
 
   it('should have the correct token address', async function () {
@@ -56,11 +57,12 @@ describe("Fail Tests", function() {
     token = await Token.deploy("Token", "TKN");
     await token.deployed();
 
+    signers= await ethers.getSigners();
+    
     const Vault = await ethers.getContractFactory('Vault');
-    vault = await Vault.deploy(token.address);
+    vault = await Vault.deploy(token.address, signers[0].address, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
     await vault.deployed();
 
-    signers= await ethers.getSigners();
   })
 
   it('should fail if non-manager tries to withdraw tokens', async function () {
