@@ -133,7 +133,9 @@ abstract contract VaultControl is SphereXProtected, VaultView, VaultManagerEvent
     function _createNewVault(
         address _tokenAddress
     ) private notZeroAddress(_tokenAddress) sphereXGuardInternal(0x6667d688) returns (uint vaultId) {
-        Vault newVault = new Vault(_tokenAddress);
+        Vault newVault = new Vault(_tokenAddress, sphereXAdmin(), sphereXOperator(), sphereXEngine());
+        _addAllowedSenderOnChain(address(newVault));
+
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
         tokenToVaultIds[_tokenAddress].push(vaultId);
