@@ -5,14 +5,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "./VaultManagerEvents.sol";
 import "./VaultView.sol";
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 
-abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC2981 {
+abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC2981, FirewallConsumer {
     /**
      * @dev will be used only once to set the trustee address initially.
      */
     function setTrustee(
         address _address
-    ) external onlyOwner notZeroAddress(_address) notEOA(_address) {
+    ) external firewallProtected onlyOwner notZeroAddress(_address) notEOA(_address) {
         require(trustee == address(0), "VaultManager: Trustee already set");
         trustee = _address;
     }
@@ -34,7 +35,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
      */
     function updateTrustee(
         address _address
-    ) external onlyOwner notZeroAddress(_address) notEOA(_address) {
+    ) external firewallProtected onlyOwner notZeroAddress(_address) notEOA(_address) {
         require(trustee != address(0), "VaultManager: Trustee not set yet");
         trustee = _address;
     }
@@ -43,7 +44,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         uint _vaultId,
         bool _depositStatus,
         bool _withdrawStatus
-    ) external onlyOwner vaultExists(_vaultId) {
+    ) external firewallProtected onlyOwner vaultExists(_vaultId) {
         bool isDepositChanged = isDepositActiveForVaultId[_vaultId] != _depositStatus;
         bool isWithdrawalChanged = isWithdrawalActiveForVaultId[_vaultId] != _withdrawStatus;
         require(
@@ -61,14 +62,14 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
 
     function createNewVault(
         address _tokenAddress
-    ) external onlyOwner returns (uint vaultId) {
+    ) external firewallProtected onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
     }
 
     function createNewVault(
         address _tokenAddress,
         uint _tradeStartTime
-    ) external onlyOwner returns (uint vaultId) {
+    ) external firewallProtected onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
     }
@@ -77,7 +78,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         address _tokenAddress,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) external onlyOwner returns (uint vaultId) {
+    ) external firewallProtected onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         _setVaultRoyalty(
             vaultId,
@@ -92,7 +93,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         uint _tradeStartTime,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) external onlyOwner returns (uint vaultId) {
+    ) external firewallProtected onlyOwner returns (uint vaultId) {
         vaultId = _createNewVault(_tokenAddress);
         setTradeStartTime(vaultId, _tradeStartTime);
         _setVaultRoyalty(
@@ -114,7 +115,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         address _tokenAddress,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) private notZeroAddress(_royaltyReceiver) {
+    ) private firewallProtectedCustom(abi.encodePacked(bytes4(0x46b000b7))) notZeroAddress(_royaltyReceiver) {
         require(
             _feeNumerator <= _feeDenominator(),
             "VaultManager: Royalty cannot be more than 100%"
@@ -130,7 +131,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
 
     function _createNewVault(
         address _tokenAddress
-    ) private notZeroAddress(_tokenAddress) returns (uint vaultId) {
+    ) private firewallProtectedCustom(abi.encodePacked(bytes4(0xcd9f019f))) notZeroAddress(_tokenAddress) returns (uint vaultId) {
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);
