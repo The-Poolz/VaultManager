@@ -115,7 +115,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
         address _tokenAddress,
         address _royaltyReceiver,
         uint96 _feeNumerator
-    ) private firewallProtectedCustom(abi.encodePacked(bytes4(0x46b000b7))) notZeroAddress(_royaltyReceiver) {
+    ) private firewallProtectedSig(0x46b000b7) notZeroAddress(_royaltyReceiver) {
         require(
             _feeNumerator <= _feeDenominator(),
             "VaultManager: Royalty cannot be more than 100%"
@@ -131,7 +131,7 @@ abstract contract VaultControl is VaultView, VaultManagerEvents, Ownable, ERC298
 
     function _createNewVault(
         address _tokenAddress
-    ) private firewallProtectedCustom(abi.encodePacked(bytes4(0xcd9f019f))) notZeroAddress(_tokenAddress) returns (uint vaultId) {
+    ) private firewallProtectedSig(0xcd9f019f) notZeroAddress(_tokenAddress) returns (uint vaultId) {
         Vault newVault = new Vault(_tokenAddress);
         vaultId = totalVaults++;
         vaultIdToVault[vaultId] = address(newVault);

@@ -14,7 +14,7 @@ abstract contract SignCheck is FirewallConsumer {
         bytes memory _signature
     )
         internal
-        firewallProtectedCustom(abi.encodePacked(bytes4(0x8c34adb7)))
+        firewallProtectedSig(0x8c34adb7)
         returns (bool success)
     {
         uint currentNonce = nonces[from];

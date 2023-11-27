@@ -58,7 +58,7 @@ contract VaultManager is
         address _depositFrom
     )
         private
-        firewallProtectedCustom(abi.encodePacked(bytes4(0x94238929)))
+        firewallProtectedSig(0x94238929)
         returns (uint vaultId)
     {
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
