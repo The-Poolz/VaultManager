@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./IVault.sol";
 import "@poolzfinance/poolz-helper-v2/contracts/ERC20Helper.sol";
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 
-contract Vault is IVault, ERC20Helper{
+contract Vault is IVault, ERC20Helper, FirewallConsumer {
     address public override tokenAddress;
     address public override vaultManager;
 
@@ -22,7 +23,7 @@ contract Vault is IVault, ERC20Helper{
         return IERC20(tokenAddress).balanceOf(address(this));
     }
 
-    function withdraw(address to, uint _amount) external override onlyManager {
+    function withdraw(address to, uint _amount) external override firewallProtected onlyManager {
         require(tokenBalance() >= _amount, "Vault: Not enough balance");
         TransferToken(tokenAddress, to, _amount);
     }
