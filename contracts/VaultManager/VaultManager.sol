@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./SignCheck.sol";
 import "./VaultControl.sol";
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 
 contract VaultManager is
     VaultControl,
@@ -22,6 +23,7 @@ contract VaultManager is
     )
         external
         override
+        firewallProtected
         nonReentrant
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
@@ -38,6 +40,7 @@ contract VaultManager is
     )
         external
         override
+        firewallProtected
         nonReentrant
         isTrustee
         isDepositActive(getCurrentVaultIdByToken(_tokenAddress))
@@ -55,7 +58,11 @@ contract VaultManager is
         address _tokenAddress,
         uint _amount,
         address _depositFrom
-    ) private returns (uint vaultId) {
+    )
+        private
+        firewallProtectedSig(0x94238929)
+        returns (uint vaultId)
+    {
         vaultId = getCurrentVaultIdByToken(_tokenAddress);
         uint balanceBefore = getVaultBalanceByVaultId(vaultId);
         address vaultAddress = vaultIdToVault[vaultId];
@@ -76,6 +83,7 @@ contract VaultManager is
     )
         external
         override
+        firewallProtected
         isTrustee
         nonReentrant
         vaultExists(_vaultId)

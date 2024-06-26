@@ -39,7 +39,7 @@ describe("Vault Manager Fail", function () {
           vaultManager
             .connect(nonGovernor)
             ["createNewVault(address)"](token.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
       }
     });
 
@@ -53,7 +53,7 @@ describe("Vault Manager Fail", function () {
               nonGovernor.getAddress(),
               100
             )
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
       }
     });
 
@@ -62,7 +62,7 @@ describe("Vault Manager Fail", function () {
         vaultManager
           .connect(nonGovernor)
           ["createNewVault(address,uint256)"](token.address, 100)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
     });
 
     it("should fail to create new vault if called by non-governor(with royalty and tradeStartTime)", async () => {
@@ -75,7 +75,7 @@ describe("Vault Manager Fail", function () {
             nonGovernor.getAddress(),
             100
           )
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
     });
 
     it("should fail to create new vault with token as zero address", async () => {
@@ -110,14 +110,14 @@ describe("Vault Manager Fail", function () {
       const permittedAddress = await nonGovernor.getAddress();
       await expect(
         vaultManager.connect(nonGovernor).setTrustee(permittedAddress)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
     });
 
     it("should fail to setTrustee if called by non-governor", async () => {
       const permittedAddress = await nonGovernor.getAddress();
       await expect(
         vaultManager.connect(nonGovernor).updateTrustee(permittedAddress)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
     });
 
     it("should fail to set EOA as trustee", async () => {
@@ -167,7 +167,7 @@ describe("Vault Manager Fail", function () {
         vaultManager
           .connect(nonGovernor)
           .setActiveStatusForVaultId(vaultId, true, true)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
     });
 
     it("should fail to start tradeStartTime if called by non owner", async () => {
@@ -178,7 +178,7 @@ describe("Vault Manager Fail", function () {
 
       await expect(
         vaultManager.connect(nonGovernor).setTradeStartTime(vaultId, 100)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWithCustomError(vaultManager, "OwnableUnauthorizedAccount");
     });
 
     it("should fail to set tradeStartTime when vault does not exist", async () => {
