@@ -1,13 +1,13 @@
 {
-  "name": "vaultfactory",
-  "version": "1.0.0",
+  "name": "@poolzfinance/vault-manager",
+  "version": "v1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@truffle/dashboard-hardhat-plugin": "^0.2.13",
     "@ethersproject/bignumber": "^5.7.0",
@@ -40,7 +40,7 @@
     "typescript": "^4.9.3"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.8.3",
-    "@poolzfinance/poolz-helper-v2": "^2.1.14"
+    "@openzeppelin/contracts": "^5.0.2",
+    "@poolzfinance/poolz-helper-v2": "^3.0.0"
   }
 }

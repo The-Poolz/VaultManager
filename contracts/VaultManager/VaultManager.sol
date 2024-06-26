@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./SignCheck.sol";
 import "./VaultControl.sol";
 
@@ -10,6 +10,8 @@ contract VaultManager is
     SignCheck,
     ReentrancyGuard
 {
+    constructor() Ownable(_msgSender()) {}
+    
     /*
      * @dev Will be used by the Trustee to deposit tokens to the vault.
      * @param _from Trustee is responsible to provide the correct _from address.
