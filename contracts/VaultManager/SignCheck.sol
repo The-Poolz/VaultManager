@@ -2,10 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 
 abstract contract SignCheck is FirewallConsumer {
     using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
+    
     mapping(address => uint) public nonces;
 
     function _checkData(
