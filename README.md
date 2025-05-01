@@ -88,6 +88,9 @@ Only the trustee can use the tokens stored in the vaults, not the owner.
 - [2_VaultManager.ts](./test/2_VaultManager.ts): Test cases for Vault Manager.
 - [3_VaultManagerFail.ts](./test/3_VaultManagerFail.ts): Negative test cases for Vault Manager.
 
+### Audit report
+The audit report is available here: [Audit Report](https://docs.google.com/document/d/18XSwsKKbHpLCr4MQNZe8nZSWHnG6aExtb57R5uzQ3Us/edit?tab=t.0#heading=h.5uoc4mfz7mn4)
+
 ## Contributing
 
 Feel free to open an issue or submit a pull request.
